@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * Class InputFields
  * @package App\Models
  * @property integer type_id
+ * @property integer question_id
  * @property string name
  * @property string label
  * @property string description
@@ -24,6 +25,7 @@ class InputFields extends Model
 
     protected $fillable = [
         'type_id',
+        'question_id',
         'name',
         'label',
         'description',
@@ -34,6 +36,11 @@ class InputFields extends Model
     public function type()
     {
         return $this->belongsTo(InputFieldType::class, 'type_id');
+    }
+
+    public function question()
+    {
+        return $this->belongsTo(Questions::class, 'question_id');
     }
 
     public function options()

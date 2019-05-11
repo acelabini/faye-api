@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * Class InputFieldType
  * @package App\Models
- * @property string type
+ * @property string name
  * @property \DateTime created_at
  * @property \DateTime updated_at
  * @property \DateTime deleted_at
@@ -18,6 +18,6 @@ class InputFieldType extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'type'
+        'name'
     ];
 }

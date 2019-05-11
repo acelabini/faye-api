@@ -16,6 +16,7 @@ class CreateInputFields extends Migration
         Schema::create('input_fields', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->integer('type_id');
+            $table->integer('question_id');
             $table->string('name');
             $table->string('label');
             $table->text('description')->nullable();

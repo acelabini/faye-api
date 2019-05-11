@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property integer created_by
  * @property string title
  * @property string description
- * @property string input_field_id
  * @property \DateTime created_at
  * @property \DateTime updated_at
  * @property \DateTime deleted_at
@@ -23,8 +22,7 @@ class Questions extends Model
     protected $fillable = [
         'created_by',
         'title',
-        'description',
-        'input_field_id'
+        'description'
     ];
 
     public function user()
@@ -32,11 +30,9 @@ class Questions extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function getInputFieldIdAttribute($value)
+    public function inputs()
     {
-        $fields = json_decode($value, true);
-
-        return InputFields::whereIn('id', $fields);
+        return $this->hasMany(InputFields::class, 'question_id');
     }
 
     public function answers()
