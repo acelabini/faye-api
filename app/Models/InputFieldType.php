@@ -17,6 +17,8 @@ class InputFieldType extends Model
 {
     use SoftDeletes;
 
+    protected $table = 'input_field_type';
+
     protected $fillable = [
         'name'
     ];

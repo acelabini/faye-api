@@ -11,7 +11,7 @@ abstract class Inputs
     protected $description;
     protected $validations;
     protected $options;
-    protected $fieldOptions;
+    protected $selectOptions;
 
     public function setQuestion($question)
     {
@@ -48,7 +48,7 @@ abstract class Inputs
         return $this;
     }
 
-    public function setValidation($validation)
+    public function setValidation(array $validation)
     {
         $this->validations = json_encode($validation);
 
@@ -62,9 +62,9 @@ abstract class Inputs
         return $this;
     }
 
-    public function setFieldOptions(array $fieldOptions = [])
+    public function setSelectOptions(array $selectOptions = [])
     {
-        $this->fieldOptions = $fieldOptions;
+        $this->selectOptions = $selectOptions;
 
         return $this;
     }
@@ -79,11 +79,8 @@ abstract class Inputs
             'options'       =>  $this->options
         ]);
 
-        if (count($this->fieldOptions)) {
-            $this->createOptions($this->type, $input, [
-                'label' => $this->fieldOptions['label'],
-                'value' => $this->fieldOptions['value']
-            ]);
+        if (count($this->selectOptions)) {
+            $this->createOptions($this->type, $input, $this->selectOptions);
         }
     }
 }

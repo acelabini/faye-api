@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AddRoleToUser extends Migration
+class AddUserToQuestionSets extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class AddRoleToUser extends Migration
      */
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->integer('role_id')->after('password')->default(1);
+        Schema::table('question_sets', function (Blueprint $table) {
+            $table->integer('created_by')->after('id');
         });
     }
 
@@ -25,8 +25,8 @@ class AddRoleToUser extends Migration
      */
     public function down()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->removeColumn('role_id');
+        Schema::table('question_sets', function (Blueprint $table) {
+            $table->dropColumn('created_by');
         });
     }
 }

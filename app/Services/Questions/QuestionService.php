@@ -32,20 +32,21 @@ class QuestionService
             'title'        =>   $data['title'],
             'description'  =>   $data['description']
         ]);
-        $type = $this->inputFieldTypeRepository->get($data['type_id']);
-        $field = $this->inputFieldService
-            ->setType($type)
-            ->setQuestion($question);
+        $field = $this->inputFieldService->setQuestion($question);
 
         foreach ($data['inputs'] as $input) {
-            $field->setName($input['name'])
+            $type = $this->inputFieldTypeRepository->get($input['type_id']);
+            $field->setType($type)
+                ->setName($input['name'])
                 ->setLabel($input['label'])
-                ->setDescription($input['description'])
-                ->setValidation($input['validations'])
-                ->setOptions($input['options'])
-                ->setFieldOptions(@$input['field_options'])
+                ->setDescription($input['description'] ?? null)
+                ->setValidation($input['validations'] ?? [])
+                ->setOptions($input['options'] ?? [])
+                ->setSelectOptions($input['select_options'] ?? [])
                 ->create();
         }
+
+        return $question;
     }
 
     public function generateQuestion(int $questionId) : array

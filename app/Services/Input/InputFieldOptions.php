@@ -4,20 +4,21 @@ namespace App\Services\Input;
 
 use App\Models\InputFields;
 use App\Models\InputFieldType;
+use Illuminate\Support\Facades\Log;
 
 trait InputFieldOptions
 {
     public function createOptions(InputFieldType $inputFieldType, InputFields $inputField, array $data) : bool
     {
-        if ($inputFieldType->type !== self::SELECT_TYPE) {
+        if ($inputFieldType->name !== self::SELECT_TYPE) {
             return false;
         }
 
-        foreach ($data as $datum) {
+        foreach ($this->selectOptions as $value => $label) {
             $this->inputFieldOptionsRepository->create([
                 'input_field_id'    =>  $inputField->id,
-                'label'             =>  $datum['label'],
-                'value'             =>  $datum['value']
+                'label'             =>  $label,
+                'value'             =>  $value
             ]);
         }
 

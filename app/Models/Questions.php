@@ -39,4 +39,22 @@ class Questions extends Model
     {
         return $this->hasMany(Answers::class, 'question_id');
     }
+
+    public function getGenerateInputsAttribute()
+    {
+        $inputs = [];
+        foreach ($this->inputs as $input) {
+            $inputs[] = [
+                'type'  =>  $input->type->name,
+                'name'  =>  $input->name,
+                'label' =>  $input->label,
+                'description'   =>  $input->description,
+                'validations'   =>  json_decode($input->validations, true),
+                'options'       =>  json_decode($input->options, true),
+                'select_options'    =>  $input->generate_options
+            ];
+        }
+
+        return $inputs;
+    }
 }

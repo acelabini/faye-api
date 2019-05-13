@@ -24,16 +24,16 @@ class InputFieldService extends Inputs
         $this->inputFieldOptionsRepository = $inputFieldOptionsRepository;
     }
 
-    private function createField(InputFieldType $inputFieldType, Questions $question, array $data)
+    protected function createField(InputFieldType $inputFieldType, Questions $question, array $data)
     {
         return $this->inputFieldsRepository->create([
             'type_id'       =>  $inputFieldType->id,
             'question_id'   =>  $question->id,
             'name'          =>  $data['name'],
             'label'         =>  $data['label'],
-            'description'   =>  json_encode($data['description']) ?? null,
-            'validations'   =>  json_encode($data['validations']) ?? null,
-            'options'       =>  json_encode($data['options']) ?? null
+            'description'   =>  $data['description'] ?? null,
+            'validations'   =>  $data['validations'] ?? null,
+            'options'       =>  $data['options'] ?? null
         ]);
     }
 }

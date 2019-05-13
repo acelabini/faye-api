@@ -43,8 +43,21 @@ class InputFields extends Model
         return $this->belongsTo(Questions::class, 'question_id');
     }
 
-    public function options()
+    public function selectOptions()
     {
         return $this->hasMany(InputFieldOptions::class, 'input_field_id');
+    }
+
+    public function getGenerateOptionsAttribute()
+    {
+        $selectOptions = [];
+        foreach ($this->selectOptions as $option) {
+            $selectOptions[] = [
+                'value' =>  $option->value,
+                'label' =>  $option->label
+            ];
+        }
+
+        return $selectOptions;
     }
 }

@@ -6,39 +6,30 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Class Answers
+ * Class QuestionnaireSets
  * @package App\Models
- * @property integer user_id
- * @property integer set_id
- * @property integer question_id
- * @property string answer
+ * @property int set_id
+ * @property int question_id
+ * @property int order
  * @property \DateTime created_at
+ * @property \DateTime updated_at
  * @property \DateTime deleted_at
  */
-class Answers extends Model
+class QuestionnaireSets extends Model
 {
     use SoftDeletes;
 
-    const UPDATED_AT = null;
-
     protected $fillable = [
-        'user_id',
         'set_id',
         'question_id',
-        'answer',
-        'created_at'
+        'order'
     ];
-
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
 
     public function set()
     {
         return $this->belongsTo(QuestionSets::class, 'set_id');
     }
-    
+
     public function question()
     {
         return $this->belongsTo(Questions::class, 'question_id');
