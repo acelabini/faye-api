@@ -2,14 +2,16 @@
 
 namespace App\Services\Input;
 
+use App\Models\InputFields;
 use App\Models\InputFieldType;
 use App\Models\Questions;
 use App\Repositories\InputFieldOptionsRepository;
 use App\Repositories\InputFieldsRepository;
+use Illuminate\Database\Eloquent\Collection;
 
 class InputFieldService extends Inputs
 {
-    use InputFieldOptions;
+    use InputField;
 
     const SELECT_TYPE = 'select';
 
@@ -35,5 +37,20 @@ class InputFieldService extends Inputs
             'validations'   =>  $data['validations'] ?? null,
             'options'       =>  $data['options'] ?? null
         ]);
+    }
+
+    public function getInputs(Questions $question)
+    {
+        return $this->inputFieldsRepository->getInputs($question->inputs()->pluck('id')->toArray());
+    }
+
+    public function validateInputFields(Collection $inputFields) : array
+    {
+        $validations = [];
+        foreach ($inputFields as $inputField) {
+            $validations["{$inputField->name}.answer"] = $this->generateValidation($inputField->validations);
+        }
+
+        return $validations;
     }
 }

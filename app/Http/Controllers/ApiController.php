@@ -25,7 +25,12 @@ class ApiController extends Controller
     {
         try {
             $callback();
-            return response()->json($this->response->getData());
+            $response = response()->json($this->response->getData());
+            if($cookie = $this->response->getCookie()) {
+                $response->cookie($cookie);
+            }
+
+            return $response;
         } catch (ApiException $e) {
             throw $e;
         } catch(ValidationException $e) {

@@ -79,4 +79,30 @@ class SetController extends ApiController
             $this->response->setData(['data' => new QuestionSetsResource($set)]);
         });
     }
+
+    public function patchQuestionSet(Request $request, $setId)
+    {
+        return $this->runWithExceptionHandling(function () use ($request, $setId) {
+            $set = $this->questionSetsRepository->get($setId);
+            $this->validate($request, [
+                'title' =>  'required'
+            ]);
+            $set = $this->questionSetsRepository->update($set, [
+                'title' =>  $request->title,
+                'description'   =>  $request->get('description') ?: $set->description
+            ]);
+
+            $this->response->setData(['data' => new QuestionSetsResource($set)]);
+        });
+    }
+
+    public function deleteQuestionSet($setId)
+    {
+        return $this->runWithExceptionHandling(function () use ($setId) {
+            $set = $this->questionSetsRepository->get($setId);
+            $this->questionSetsRepository->delete($set);
+
+            $this->response->setData([]);
+        });
+    }
 }

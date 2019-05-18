@@ -119,4 +119,29 @@ class QuestionController extends ApiController
             $this->response->setData(['data' => new QuestionCreation($question)]);
         });
     }
+
+    public function patchQuestion(Request $request, $questionId)
+    {
+        return $this->runWithExceptionHandling(function () use ($request, $questionId) {
+            $question = $this->questionsRepository->get($questionId);
+            $this->validate($request, [
+                'title' =>  'required'
+            ]);
+            $updatedQuestion = $this->questionsRepository->update($question, [
+                'title' =>  $request->get('title'),
+                'description'   =>  $request->get('description') ?: $question->description
+            ]);
+            $this->response->setData(['data' => $updatedQuestion]);
+        });
+    }
+
+    public function deleteQuestion($questionId)
+    {
+        return $this->runWithExceptionHandling(function () use ($questionId) {
+            $question = $this->questionsRepository->get($questionId);
+            $this->questionsRepository->delete($question);
+
+            $this->response->setData([]);
+        });
+    }
 }

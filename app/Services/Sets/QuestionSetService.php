@@ -2,10 +2,15 @@
 
 namespace App\Sets;
 
+use App\Models\LocationBarangays;
 use App\Models\User;
+use App\Repositories\AnswersRepository;
 use App\Repositories\QuestionnaireSetsRepository;
 use App\Repositories\QuestionSetsRepository;
 use App\Repositories\QuestionsRepository;
+use App\Services\Answer\AnswerService;
+use App\Utils\Enumerators\QuestionSetStatusEnumerator;
+use Illuminate\Support\Facades\Auth;
 
 class QuestionSetService
 {
@@ -42,6 +47,28 @@ class QuestionSetService
                     ]);
                 }
             }
+        }
+
+        return $set;
+    }
+
+    public function getDefault()
+    {
+        return $this->questionSetsRepository->find([
+            ['location_id', null],
+            ['status', QuestionSetStatusEnumerator::DEFAULT]
+        ]);
+    }
+
+    public function getSet(LocationBarangays $locationBarangay = null)
+    {
+        if ($locationBarangay) {
+            $set = $this->questionSetsRepository->find([
+                ['location_id', $locationBarangay->id],
+                ['status', QuestionSetStatusEnumerator::DEFAULT]
+            ]);
+        } else {
+            $set = $this->getDefault();
         }
 
         return $set;

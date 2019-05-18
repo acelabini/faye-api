@@ -10,4 +10,9 @@ class InputFieldsRepository extends Repository
     {
         $this->model = new InputFields();
     }
+
+    public function getInputs(array $ids)
+    {
+        return $this->model->whereIn('id', $ids)->get();
+    }
 }

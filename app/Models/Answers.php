@@ -9,8 +9,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * Class Answers
  * @package App\Models
  * @property integer user_id
- * @property integer set_id
- * @property integer question_id
+ * @property string device_address
+ * @property integer questionnaire_id
+ * @property integer field_id
  * @property string answer
  * @property \DateTime created_at
  * @property \DateTime deleted_at
@@ -23,8 +24,9 @@ class Answers extends Model
 
     protected $fillable = [
         'user_id',
-        'set_id',
-        'question_id',
+        'device_address',
+        'questionnaire_id',
+        'field_id',
         'answer',
         'created_at'
     ];
@@ -34,13 +36,13 @@ class Answers extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function set()
+    public function questionnaire()
     {
-        return $this->belongsTo(QuestionSets::class, 'set_id');
+            return $this->belongsTo(QuestionnaireSets::class, 'questionnaire_id');
     }
     
-    public function question()
+    public function field()
     {
-        return $this->belongsTo(Questions::class, 'question_id');
+        return $this->belongsTo(InputFields::class, 'field_id');
     }
 }

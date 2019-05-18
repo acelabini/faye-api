@@ -6,7 +6,7 @@ use App\Models\InputFields;
 use App\Models\InputFieldType;
 use Illuminate\Support\Facades\Log;
 
-trait InputFieldOptions
+trait InputField
 {
     public function createOptions(InputFieldType $inputFieldType, InputFields $inputField, array $data) : bool
     {
@@ -23,5 +23,28 @@ trait InputFieldOptions
         }
 
         return true;
+    }
+
+    /**
+     * Generate a validation format
+     * {"min":1,"max":10,"required":true} to min:1|max:10|required
+     * @param $validations
+     * @return string
+     */
+    public function generateValidation($validations)
+    {
+        $validations = json_decode($validations, true);
+        $rules = "";
+        foreach ($validations as $rule => $value) {
+            $rules .= $rule;
+            if (!is_bool($value)) {
+                $rules .= ":{$value}";
+            }
+            if (count($validations) > 1) {
+                $rules .= "|";
+            }
+        }
+
+        return rtrim($rules, "|");
     }
 }
