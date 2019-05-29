@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @package App\Models
  * @property integer type_id
  * @property integer question_id
+ * @property integer order
  * @property string name
  * @property string label
  * @property string description
@@ -26,6 +27,7 @@ class InputFields extends Model
     protected $fillable = [
         'type_id',
         'question_id',
+        'order',
         'name',
         'label',
         'description',

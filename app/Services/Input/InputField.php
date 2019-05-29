@@ -25,6 +25,27 @@ trait InputField
         return true;
     }
 
+    public function updateOptions(InputFieldType $inputFieldType, InputFields $inputField, array $data) : bool
+    {
+        if ($inputFieldType->name !== self::SELECT_TYPE) {
+            return false;
+        }
+
+        foreach ($this->selectOptions as $id => $label) {
+            $option = $this->inputFieldOptionsRepository->search([
+                ['id', $id]
+            ]);
+            if (!$option) continue;
+
+            $this->inputFieldOptionsRepository->update($option, [
+                'label'             =>  $label,
+                'value'             =>  $label
+            ]);
+        }
+
+        return true;
+    }
+
     /**
      * Generate a validation format
      * {"min":1,"max":10,"required":true} to min:1|max:10|required

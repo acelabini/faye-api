@@ -21,7 +21,9 @@ class GetQuestionSets extends JsonResource
                     'id' => $set->id,
                     'created_by'    =>  $set->user->name,
                     'title' => $set->title,
-                    'description' => $set->description
+                    'description' => $set->description,
+                    'location'  =>  $set->location_id ? $set->location : null,
+                    'status'    =>  $set->status
                 ];
             }
         }

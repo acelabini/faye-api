@@ -59,7 +59,7 @@ class QuestionnaireController extends ApiController
                     Response::HTTP_OK
                 );
             }
-            if ($order > $currentSet->order) {
+            if ($order > $currentSet->order && !env('SKIP_QUESTIONS')) {
                 throw new UnauthorizedException("Unauthorized access.", Response::HTTP_UNAUTHORIZED);
             }
 

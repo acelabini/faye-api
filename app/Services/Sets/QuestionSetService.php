@@ -28,16 +28,36 @@ class QuestionSetService
         $this->questionsRepository = $questionsRepository;
     }
 
-    public function create(User $user, array $data)
+    public function create(User $user, array $data, LocationBarangays $locationBarangays = null)
     {
         $set = $this->questionSetsRepository->create([
             'created_by'    =>  $user->id,
             'title'         =>  $data['title'],
-            'description'   =>  $data['description'] ?? null
+            'description'   =>  $data['description'] ?? null,
+            'status'        =>  $data['is_default']
+                ? QuestionSetStatusEnumerator::DEFAULT : QuestionSetStatusEnumerator::ACTIVE
         ]);
 
-        if (count($data['question_ids'])) {
-            foreach ($data['question_ids'] as $order => $question_id) {
+        if ($locationBarangays) {
+
+        }
+
+        if ($data['is_default'] === QuestionSetStatusEnumerator::DEFAULT) {
+            $default = $this->questionSetsRepository->search([
+                'location_id'   =>  optional($locationBarangays)->id,
+                'status'        =>  QuestionSetStatusEnumerator::DEFAULT
+            ]);
+
+            if ($default->isNotEmpty()) {
+               $this->questionSetsRepository->update($default->first(), [
+                   'status'        =>  QuestionSetStatusEnumerator::ACTIVE
+               ]) ;
+            }
+        }
+
+        if (count($question_ids = $data['question_ids'])) {
+            $question_ids = array_values($question_ids);
+            foreach ($question_ids as $order => $question_id) {
                 $question = $this->questionsRepository->getById($question_id);
                 if ($question) {
                     $this->questionnaireSetsRepository->create([
@@ -62,7 +82,7 @@ class QuestionSetService
 
     public function getSet(LocationBarangays $locationBarangay = null)
     {
-        if ($locationBarangay) {
+        if ($locationBarangay && !env('SKIP_QUESTIONS')) {
             $set = $this->questionSetsRepository->find([
                 ['location_id', $locationBarangay->id],
                 ['status', QuestionSetStatusEnumerator::DEFAULT]

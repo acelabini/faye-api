@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Authentication;
 use App\Http\Controllers\ApiController;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Tymon\JWTAuth\JWTAuth;
 
 class AuthenticationController extends ApiController
@@ -32,7 +34,8 @@ class AuthenticationController extends ApiController
 
             $this->response->setData(['data' => [
                 'success'   =>  $token ? true : false,
-                'token'     =>  $token
+                'token'     =>  $token,
+                'user'      =>  $this->auth->user()
             ]]);
         });
     }

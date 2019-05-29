@@ -2,8 +2,12 @@
 
 namespace App\Services\Input;
 
+use App\Models\InputFields;
+use App\Models\Questions;
+
 abstract class Inputs
 {
+    protected $inputField;
     protected $type;
     protected $question;
     protected $name;
@@ -13,7 +17,14 @@ abstract class Inputs
     protected $options;
     protected $selectOptions;
 
-    public function setQuestion($question)
+    public function setInputField(InputFields $inputField)
+    {
+        $this->inputField = $inputField;
+
+        return $this;
+    }
+
+    public function setQuestion(Questions $question)
     {
         $this->question = $question;
 
@@ -43,7 +54,7 @@ abstract class Inputs
 
     public function setDescription($description)
     {
-        $this->description = json_encode($description);
+        $this->description = $description;
 
         return $this;
     }
@@ -69,10 +80,25 @@ abstract class Inputs
         return $this;
     }
 
-    public function create()
+    public function create($key)
     {
         $input = $this->createField($this->type, $this->question, [
             'name'          =>  $this->name,
+            'label'         =>  $this->label,
+            'description'   =>  $this->description,
+            'validations'   =>  $this->validations,
+            'options'       =>  $this->options,
+            'order'         =>  $key
+        ]);
+
+        if (count($this->selectOptions)) {
+            $this->createOptions($this->type, $input, $this->selectOptions);
+        }
+    }
+
+    public function update()
+    {
+        $input = $this->updateField($this->inputField, [
             'label'         =>  $this->label,
             'description'   =>  $this->description,
             'validations'   =>  $this->validations,
@@ -80,7 +106,7 @@ abstract class Inputs
         ]);
 
         if (count($this->selectOptions)) {
-            $this->createOptions($this->type, $input, $this->selectOptions);
+            $this->updateOptions($this->inputField->type, $input, $this->selectOptions);
         }
     }
 }

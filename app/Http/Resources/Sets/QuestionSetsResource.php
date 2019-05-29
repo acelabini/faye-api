@@ -18,6 +18,7 @@ class QuestionSetsResource extends JsonResource
             'id'            =>  $this->id,
             'title'         =>  $this->title,
             'description'   =>  $this->description,
+            'status'        =>  $this->status,
             'questions'     =>  $this->generate_questionnaires
         ];
     }

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Management;
 
+use App\Http\Controllers\ApiController;
 use App\Http\Resources\Questions\GetQuestions;
 use App\Http\Resources\Questions\QuestionCreation;
-use App\Http\Resources\Questions\QuestionSetsResource;
 use App\Repositories\QuestionsRepository;
 use App\Repositories\UserRepository;
 use App\Services\Questions\QuestionService;
@@ -124,14 +124,24 @@ class QuestionController extends ApiController
     {
         return $this->runWithExceptionHandling(function () use ($request, $questionId) {
             $question = $this->questionsRepository->get($questionId);
-            $this->validate($request, [
-                'title' =>  'required'
+            $rule = ['inputs.*.id' => 'required|exists:input_fields,id'];
+            $message = [
+                'inputs.*.id.required'  => 'Input is required.',
+                'inputs.*.id.exists'    => 'Input is invalid.'
+            ];
+            $this->validate(
+                $request,
+                array_merge($rule, QuestionCreate::getRules()),
+                array_merge($message, QuestionCreate::getMessages())
+            );
+
+            $question = $this->questionService->update($question, [
+                'title'         =>  $request->get('title'),
+                'description'   =>  $request->get('description'),
+                'inputs'        =>  $request->get('inputs')
             ]);
-            $updatedQuestion = $this->questionsRepository->update($question, [
-                'title' =>  $request->get('title'),
-                'description'   =>  $request->get('description') ?: $question->description
-            ]);
-            $this->response->setData(['data' => $updatedQuestion]);
+
+            $this->response->setData(['data' => new QuestionCreation($question)]);
         });
     }
 

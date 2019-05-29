@@ -13,6 +13,7 @@ use App\Repositories\QuestionsRepository;
 use App\Services\Answer\AnswerService;
 use App\Services\Input\InputFieldService;
 use App\Sets\QuestionSetService;
+use Illuminate\Support\Facades\Log;
 
 class QuestionService
 {
@@ -50,16 +51,44 @@ class QuestionService
         ]);
         $field = $this->inputFieldService->setQuestion($question);
 
-        foreach ($data['inputs'] as $input) {
-            $type = $this->inputFieldTypeRepository->get($input['type_id']);
-            $field->setType($type)
+        foreach ($data['inputs'] as $key => $input) {
+            $type = $this->inputFieldTypeRepository->search([
+                ['name', $input['type']]
+            ]);
+            if (!count($type)) continue;
+
+            $field->setType($type->first())
                 ->setName($input['name'])
                 ->setLabel($input['label'])
                 ->setDescription($input['description'] ?? null)
                 ->setValidation($input['validations'] ?? [])
                 ->setOptions($input['options'] ?? [])
                 ->setSelectOptions($input['select_options'] ?? [])
-                ->create();
+                ->create(++$key);
+        }
+
+        return $question;
+    }
+
+    public function update(Questions $question, array $data)
+    {
+        $question = $this->questionsRepository->update($question, [
+            'title'        =>   $data['title'],
+            'description'   =>  $data['description'] ?: $question->description
+        ]);
+        $field = $this->inputFieldService->setQuestion($question);
+
+        foreach ($data['inputs'] as $input) {
+            $inputField = $this->inputFieldService->getById($input['id']);
+            if (!$inputField) continue;
+
+            $field->setInputField($inputField)
+                ->setLabel($input['label'])
+                ->setDescription($input['description'] ?? null)
+                ->setValidation($input['validations'] ?? [])
+                ->setOptions($input['options'] ?? [])
+                ->setSelectOptions($input['select_options'] ?? [])
+                ->update();
         }
 
         return $question;
@@ -93,7 +122,7 @@ class QuestionService
         ]);
 
         $currentSet = $set->questionnaires->first();
-        if (count($lastAnswered)) {
+        if (count($lastAnswered)&& !env('SKIP_QUESTIONS')) {
             $lastAnswered = $lastAnswered->last();
             if ($lastAnswered->questionnaire->set_id === $set->id) {
                 $currentOrder = $lastAnswered->questionnaire->order;
@@ -108,6 +137,11 @@ class QuestionService
                     );
                 }
             }
+        } else if (env('SKIP_QUESTIONS')) {
+            $currentSet = $this->questionnaireSetsRepository->getQuestionBySetAndOrder(
+                $set,
+                $order
+            );
         }
 
         return [optional($currentSet)->question, $currentSet];

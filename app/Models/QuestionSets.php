@@ -32,7 +32,12 @@ class QuestionSets extends Model
 
     public function questionnaires()
     {
-        return $this->hasMany(QuestionnaireSets::class, 'set_id');
+        return $this->hasMany(QuestionnaireSets::class, 'set_id')->orderBy('order', 'asc');
+    }
+
+    public function location()
+    {
+        return $this->belongsTo(LocationBarangays::class, 'location_id');
     }
 
     public function getGenerateQuestionnairesAttribute()
