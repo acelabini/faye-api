@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\UnauthorizedException;
 
@@ -58,30 +59,34 @@ class AnswerController extends ApiController
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function answer(Request $request)
+    public function answer(Request $request, $order)
     {
-        return $this->runWithExceptionHandling(function () use ($request) {
-            list($currentQuestion, $currentSet) = $this->questionService->getCurrentQuestion();
+        return $this->runWithExceptionHandling(function () use ($request, $order) {
+            list($currentQuestion, $currentSet) = $this->questionService->getCurrentQuestion(null, $order);
             if ($currentQuestion) {
                 $this->validate($request, $this->inputFieldService->validateInputFields($currentQuestion->inputs));
                 $fields = $currentQuestion->inputs->pluck('name')->toArray();
+                $answers = $request->all();
+                $identifier = AnswerService::getAnswerIdentifier($answers['device']);
+                unset($answers['device']);
 
-                list($identifier, $cookie) = AnswerService::getAnswerIdentifier(true);
-                $this->answerService->answerQuestion($currentSet, $identifier, $request->only($fields));
-
-                $this->response->setCookie($cookie);
+                $data = [];
+                foreach ($fields as $field) {
+                    $data[] = $answers[$field];
+                }
+                $this->answerService->answerQuestion($currentSet, $identifier, $data);
             }
 
             $this->response->setData(['data' => ['success' => true, 'finish' => !$currentQuestion]]);
         });
     }
 
-    public function getAnswer($order)
+    public function getAnswer(Request $request, $order)
     {
-        return $this->runWithExceptionHandling(function () use ($order) {
+        return $this->runWithExceptionHandling(function () use ($request, $order) {
             $order = intval($order);
             list($currentQuestion, $currentSet) = $this->questionService->getCurrentQuestion(null, $order);
-            $identifier = AnswerService::getAnswerIdentifier();
+            $identifier = AnswerService::getAnswerIdentifier($request->get('device'));
             $answers = $this->answersRepository->search([
                 ['user_id', $identifier['user_id']],
                 ['device_address', $identifier['device_address']],

@@ -66,4 +66,13 @@ class QuestionnaireController extends ApiController
             $this->response->setData(['data' => new QuestionCreation($currentQuestion)]);
         });
     }
+
+    public function getDefaultSet()
+    {
+        return $this->runWithExceptionHandling(function () {
+            $set = $this->questionSetService->getSet();
+
+            $this->response->setData(['data' => ['set' => $set, 'questions_count' => $set->questionnaires->count()]]);
+        });
+    }
 }

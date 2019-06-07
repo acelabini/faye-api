@@ -8,6 +8,7 @@ use App\Models\Questions;
 use App\Repositories\InputFieldOptionsRepository;
 use App\Repositories\InputFieldsRepository;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Log;
 
 class InputFieldService extends Inputs
 {
@@ -67,7 +68,6 @@ class InputFieldService extends Inputs
         foreach ($inputFields as $inputField) {
             $validations["{$inputField->name}.answer"] = $this->generateValidation($inputField->validations);
         }
-
         return $validations;
     }
 }

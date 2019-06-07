@@ -64,7 +64,7 @@ class QuestionService
                 ->setValidation($input['validations'] ?? [])
                 ->setOptions($input['options'] ?? [])
                 ->setSelectOptions($input['select_options'] ?? [])
-                ->create(++$key);
+                ->create(++$key, $input['summary'] ?? null);
         }
 
         return $question;
@@ -115,7 +115,7 @@ class QuestionService
     public function getCurrentQuestion(LocationBarangays $locationBarangay = null, int $order = null)
     {
         $set = $this->questionSetService->getSet($locationBarangay);
-        $identifier = AnswerService::getAnswerIdentifier();
+        $identifier = AnswerService::getAnswerIdentifier(request()->get('device'));
         $lastAnswered = $this->answersRepository->search([
             ['user_id', $identifier['user_id']],
             ['device_address', $identifier['device_address']]

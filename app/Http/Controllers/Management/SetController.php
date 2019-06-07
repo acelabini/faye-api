@@ -60,7 +60,10 @@ class SetController extends ApiController
             ]);
 
             $user = $this->userRepository->get(Auth::user()->id);
-            $set = $this->questionSetService->create($user, $request->only(['title', 'description', 'question_ids']));
+            $set = $this->questionSetService->create(
+                $user,
+                $request->only(['title', 'description', 'default', 'question_ids'])
+            );
 
             $this->response->setData(['data' => new QuestionSetsResource($set)]);
         });

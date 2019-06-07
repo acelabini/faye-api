@@ -34,7 +34,7 @@ class QuestionSetService
             'created_by'    =>  $user->id,
             'title'         =>  $data['title'],
             'description'   =>  $data['description'] ?? null,
-            'status'        =>  $data['is_default']
+            'status'        =>  $data['default']
                 ? QuestionSetStatusEnumerator::DEFAULT : QuestionSetStatusEnumerator::ACTIVE
         ]);
 
@@ -42,9 +42,9 @@ class QuestionSetService
 
         }
 
-        if ($data['is_default'] === QuestionSetStatusEnumerator::DEFAULT) {
+        if ($data['default'] === QuestionSetStatusEnumerator::DEFAULT) {
             $default = $this->questionSetsRepository->search([
-                'location_id'   =>  optional($locationBarangays)->id,
+                'location_id'   =>  optional($locationBarangays)->id ?? null,
                 'status'        =>  QuestionSetStatusEnumerator::DEFAULT
             ]);
 

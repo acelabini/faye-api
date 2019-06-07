@@ -80,7 +80,7 @@ abstract class Inputs
         return $this;
     }
 
-    public function create($key)
+    public function create($key, $summary = null)
     {
         $input = $this->createField($this->type, $this->question, [
             'name'          =>  $this->name,
@@ -88,7 +88,8 @@ abstract class Inputs
             'description'   =>  $this->description,
             'validations'   =>  $this->validations,
             'options'       =>  $this->options,
-            'order'         =>  $key
+            'order'         =>  $key,
+            'summary'       =>  $summary
         ]);
 
         if (count($this->selectOptions)) {

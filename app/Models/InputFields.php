@@ -32,7 +32,8 @@ class InputFields extends Model
         'label',
         'description',
         'validations',
-        'options'
+        'options',
+        'summary',
     ];
 
     public function type()

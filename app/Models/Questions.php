@@ -45,6 +45,7 @@ class Questions extends Model
         $inputs = [];
         foreach ($this->inputs as $input) {
             $inputs[] = [
+                'id'    =>  $input->id,
                 'type'  =>  $input->type->name,
                 'name'  =>  $input->name,
                 'label' =>  $input->label,
