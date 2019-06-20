@@ -13,11 +13,9 @@ use Illuminate\Http\Request;
 |
 */
 
-//Route::middleware('auth:api')->get('/user', function (Request $request) {
-//    return $request->user();
-//});
-
 $router->group(['prefix' => 'v1'], function () use ($router) {
+    $router->get('/manual', 'Management\QuestionController@manual');
+    $router->get('/cloud', 'SummaryController@wordCloud');
     $router->group(['middleware' => ['secret']], function () use ($router) {
         $router->group(['prefix' => 'question'], function () use ($router) {
             $router->get('/{order}', 'QuestionnaireController@getQuestionnaire');
@@ -26,6 +24,7 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
             $router->get('/', 'QuestionnaireController@getDefaultSet');
         });
         $router->group(['prefix' => 'answer'], function () use ($router) {
+            $router->get('/summary/{device?}/{order?}', 'SummaryController@summary');
             $router->get('/{order}', 'AnswerController@getAnswer');
             $router->post('/{order?}', 'AnswerController@answer');
         });

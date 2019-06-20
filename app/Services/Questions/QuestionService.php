@@ -78,17 +78,33 @@ class QuestionService
         ]);
         $field = $this->inputFieldService->setQuestion($question);
 
-        foreach ($data['inputs'] as $input) {
-            $inputField = $this->inputFieldService->getById($input['id']);
-            if (!$inputField) continue;
+        foreach ($data['inputs'] as $key => $input) {
+            if (isset($input['field_id'])) {
+                $inputField = $this->inputFieldService->getById($input['field_id']);
+                if (!$inputField) continue;
 
-            $field->setInputField($inputField)
-                ->setLabel($input['label'])
-                ->setDescription($input['description'] ?? null)
-                ->setValidation($input['validations'] ?? [])
-                ->setOptions($input['options'] ?? [])
-                ->setSelectOptions($input['select_options'] ?? [])
-                ->update();
+                $field->setInputField($inputField)
+                    ->setLabel($input['label'])
+                    ->setDescription($input['description'] ?? null)
+                    ->setValidation($input['validations'] ?? [])
+                    ->setOptions($input['options'] ?? [])
+                    ->setSelectOptions($input['select_options'] ?? [])
+                    ->update(++$key, $input['summary'] ?? null);
+            } else {
+                $type = $this->inputFieldTypeRepository->search([
+                    ['name', $input['type']]
+                ]);
+                if (!count($type)) continue;
+
+                $field->setType($type->first())
+                    ->setName($input['name'])
+                    ->setLabel($input['label'])
+                    ->setDescription($input['description'] ?? null)
+                    ->setValidation($input['validations'] ?? [])
+                    ->setOptions($input['options'] ?? [])
+                    ->setSelectOptions($input['select_options'] ?? [])
+                    ->create(++$key, $input['summary'] ?? null);
+            }
         }
 
         return $question;

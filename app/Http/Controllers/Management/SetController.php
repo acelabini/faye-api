@@ -92,12 +92,14 @@ class SetController extends ApiController
         return $this->runWithExceptionHandling(function () use ($request, $setId) {
             $set = $this->questionSetsRepository->get($setId);
             $this->validate($request, [
-                'title' =>  'required'
+                'title'         =>  'required',
+                'question_ids'  =>  'required'
             ]);
-            $set = $this->questionSetsRepository->update($set, [
-                'title' =>  $request->get('title'),
-                'description'   =>  $request->get('description') ?: $set->description
-            ]);
+
+            $set = $this->questionSetService->patch(
+                $set,
+                $request->only(['title', 'description', 'default', 'question_ids'])
+            );
 
             $this->response->setData(['data' => new QuestionSetsResource($set)]);
         });

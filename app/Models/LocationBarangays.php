@@ -17,8 +17,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class LocationBarangays extends Model
 {
-    use SoftDeletes;
-
     const UPDATED_AT = null;
 
     protected $fillable = [

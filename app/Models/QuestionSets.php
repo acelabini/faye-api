@@ -22,7 +22,9 @@ class QuestionSets extends Model
     protected $fillable = [
         'created_by',
         'title',
-        'description'
+        'description',
+        'location_id',
+        'status'
     ];
 
     public function user()
@@ -47,6 +49,7 @@ class QuestionSets extends Model
             $questions[] = [
                 'order'     =>  $questionnaire->order,
                 'question'  =>  [
+                    'id'                =>  $questionnaire->question->id,
                     'title'             =>  $questionnaire->question->title,
                     'description'       =>  $questionnaire->question->description,
                     'inputs'            =>  $questionnaire->question->generate_inputs

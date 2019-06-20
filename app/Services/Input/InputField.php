@@ -10,7 +10,7 @@ trait InputField
 {
     public function createOptions(InputFieldType $inputFieldType, InputFields $inputField, array $data) : bool
     {
-        if ($inputFieldType->name !== self::SELECT_TYPE) {
+        if (!in_array($inputFieldType->name, self::VALID_TYPES)) {
             return false;
         }
 
@@ -27,7 +27,7 @@ trait InputField
 
     public function updateOptions(InputFieldType $inputFieldType, InputFields $inputField, array $data) : bool
     {
-        if ($inputFieldType->name !== self::SELECT_TYPE) {
+        if (!in_array($inputFieldType->name, self::VALID_TYPES)) {
             return false;
         }
 
@@ -35,12 +35,18 @@ trait InputField
             $option = $this->inputFieldOptionsRepository->search([
                 ['id', $id]
             ]);
-            if (!$option) continue;
-
-            $this->inputFieldOptionsRepository->update($option, [
-                'label'             =>  $label,
-                'value'             =>  $label
-            ]);
+            if ($option->isEmpty()) {
+                $this->inputFieldOptionsRepository->create([
+                    'input_field_id'    =>  $inputField->id,
+                    'label' => $label,
+                    'value' => $label
+                ]);
+            } else {
+                $this->inputFieldOptionsRepository->update($option->first(), [
+                    'label' => $label,
+                    'value' => $label
+                ]);
+            }
         }
 
         return true;

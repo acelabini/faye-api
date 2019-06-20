@@ -56,6 +56,7 @@ class InputFields extends Model
         $selectOptions = [];
         foreach ($this->selectOptions as $option) {
             $selectOptions[] = [
+                'id'    =>  $option->id,
                 'value' =>  $option->value,
                 'label' =>  $option->label
             ];

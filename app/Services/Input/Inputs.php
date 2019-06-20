@@ -80,7 +80,7 @@ abstract class Inputs
         return $this;
     }
 
-    public function create($key, $summary = null)
+    public function create($order, $summary = null)
     {
         $input = $this->createField($this->type, $this->question, [
             'name'          =>  $this->name,
@@ -88,7 +88,7 @@ abstract class Inputs
             'description'   =>  $this->description,
             'validations'   =>  $this->validations,
             'options'       =>  $this->options,
-            'order'         =>  $key,
+            'order'         =>  $order,
             'summary'       =>  $summary
         ]);
 
@@ -97,13 +97,15 @@ abstract class Inputs
         }
     }
 
-    public function update()
+    public function update($order, $summary = null)
     {
         $input = $this->updateField($this->inputField, [
             'label'         =>  $this->label,
             'description'   =>  $this->description,
             'validations'   =>  $this->validations,
-            'options'       =>  $this->options
+            'options'       =>  $this->options,
+            'order'         =>  $order,
+            'summary'       =>  $summary
         ]);
 
         if (count($this->selectOptions)) {

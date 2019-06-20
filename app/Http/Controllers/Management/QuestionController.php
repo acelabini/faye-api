@@ -5,6 +5,10 @@ namespace App\Http\Controllers\Management;
 use App\Http\Controllers\ApiController;
 use App\Http\Resources\Questions\GetQuestions;
 use App\Http\Resources\Questions\QuestionCreation;
+use App\Models\InputFieldOptions;
+use App\Models\InputFields;
+use App\Models\InputFieldType;
+use App\Models\LocationBarangays;
 use App\Repositories\QuestionsRepository;
 use App\Repositories\UserRepository;
 use App\Services\Questions\QuestionService;
@@ -123,17 +127,16 @@ class QuestionController extends ApiController
     public function patchQuestion(Request $request, $questionId)
     {
         return $this->runWithExceptionHandling(function () use ($request, $questionId) {
-            $question = $this->questionsRepository->get($questionId);
-            $rule = ['inputs.*.id' => 'required|exists:input_fields,id'];
+            $rule = ['inputs.*.input_fields.id' => 'sometimes|exists:input_fields,id'];
             $message = [
-                'inputs.*.id.required'  => 'Input is required.',
-                'inputs.*.id.exists'    => 'Input is invalid.'
+                'inputs.*.input_fields.id.exists'    => 'Input is invalid.'
             ];
             $this->validate(
                 $request,
                 array_merge($rule, QuestionCreate::getRules()),
                 array_merge($message, QuestionCreate::getMessages())
             );
+            $question = $this->questionsRepository->get($questionId);
 
             $question = $this->questionService->update($question, [
                 'title'         =>  $request->get('title'),
@@ -153,5 +156,33 @@ class QuestionController extends ApiController
 
             $this->response->setData([]);
         });
+    }
+
+    public function manual()
+    {
+//        $input = InputFields::create([
+//            'type_id'   =>  3,
+//            'question_id'   =>  10,
+//            'order' =>  5,
+//            'summary'   =>  'pie',
+//            'name' =>  'Address_label_j52t11',
+//            'label' =>  'Address',
+//            'description' => null,
+//            'validations' => null,
+//            'options'   =>  json_encode(["value" => "Select Barangay"])
+//        ]);
+//        InputFieldOptions::create([
+//            'input_field_id'    =>  $input->id,
+//            'label'             =>  'Select Barangay',
+//            'value'             =>  'Select Barangay'
+//        ]);
+//        foreach (LocationBarangays::all() as $barangay) {
+//            InputFieldOptions::create([
+//                'input_field_id'    =>  $input->id,
+//                'label'             =>  $barangay->name,
+//                'value'             =>  $barangay->name
+//            ]);
+//        }
+
     }
 }

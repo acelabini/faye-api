@@ -34,25 +34,47 @@ class AnswerService
 
     public function answerQuestion(QuestionnaireSets $currentSet, $identifier, array $data)
     {
-        foreach ($data as $datum) {
-            $dataPosted = [
-                    'questionnaire_id'  =>  $currentSet->id,
-                    'field_id'          =>  $datum['id'],
-                    'answer'            =>  $datum['answer']
-            ];
-            $searched = $this->answersRepository->search([
-                ['questionnaire_id', $currentSet->id],
-                ['field_id', $datum['id']]
-            ]);
-            if ($searched->isNotEmpty()) {
-                $this->answersRepository->update($searched->first(), $dataPosted);
-            } else {
-                $this->answersRepository->create(
-                    array_merge(
-                        $identifier,
-                        $dataPosted
-                    )
-                );
+        $identity = ['device_address', $identifier['device_address']];
+        if (isset($identifier['user_id']) && $identifier['user_id']) {
+            $identity = ['user_id', $identifier['user_id']];
+        }
+
+        foreach ($data as $items) {
+            $size = count($items);
+            if ($size > 1) {
+                $searched = $this->answersRepository->search([
+                    $identity,
+                    ['questionnaire_id', $currentSet->id],
+                    ['field_id', $items[0]['id']]
+                ]);
+                foreach ($searched as $item) {
+                    $this->answersRepository->delete($item);
+                }
+            }
+            foreach ($items as $datum) {
+                if (!$datum) {
+                    continue;
+                }
+                $dataPosted = [
+                    'questionnaire_id' => $currentSet->id,
+                    'field_id' => $datum['id'],
+                    'answer' => $datum['answer']
+                ];
+                $searched = $this->answersRepository->search([
+                    $identity,
+                    ['questionnaire_id', $currentSet->id],
+                    ['field_id', $datum['id']]
+                ]);
+                if ($searched->isNotEmpty() && $size === 1) {
+                    $this->answersRepository->update($searched->first(), $dataPosted);
+                } else {
+                    $this->answersRepository->create(
+                        array_merge(
+                            $identifier,
+                            $dataPosted
+                        )
+                    );
+                }
             }
         }
     }

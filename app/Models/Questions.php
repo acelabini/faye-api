@@ -32,7 +32,7 @@ class Questions extends Model
 
     public function inputs()
     {
-        return $this->hasMany(InputFields::class, 'question_id');
+        return $this->hasMany(InputFields::class, 'question_id')->orderBy('order', 'asc');
     }
 
     public function answers()
@@ -45,10 +45,11 @@ class Questions extends Model
         $inputs = [];
         foreach ($this->inputs as $input) {
             $inputs[] = [
-                'id'    =>  $input->id,
-                'type'  =>  $input->type->name,
-                'name'  =>  $input->name,
-                'label' =>  $input->label,
+                'id'        =>  $input->id,
+                'type'      =>  $input->type->name,
+                'summary'   =>  $input->summary,
+                'name'      =>  $input->name,
+                'label'     =>  $input->label,
                 'description'   =>  $input->description,
                 'validations'   =>  json_decode($input->validations, true),
                 'options'       =>  json_decode($input->options, true),

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Exception;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use App\Exceptions\ApiException;
 use App\Http\Responses\ApiResponse;

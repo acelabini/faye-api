@@ -69,10 +69,11 @@ class AnswerController extends ApiController
                 $answers = $request->all();
                 $identifier = AnswerService::getAnswerIdentifier($answers['device']);
                 unset($answers['device']);
-
                 $data = [];
                 foreach ($fields as $field) {
-                    $data[] = $answers[$field];
+                    if (isset($answers[$field])) {
+                        $data[] = $answers[$field];
+                    }
                 }
                 $this->answerService->answerQuestion($currentSet, $identifier, $data);
             }
@@ -92,9 +93,9 @@ class AnswerController extends ApiController
                 ['device_address', $identifier['device_address']],
                 ['questionnaire_id', $currentSet->id]
             ]);
-            if ($order > $currentSet->order) {
-                throw new UnauthorizedException("Unauthorized access.", Response::HTTP_UNAUTHORIZED);
-            }
+//            if ($order > $currentSet->order) {
+//                throw new UnauthorizedException("Unauthorized access.", Response::HTTP_UNAUTHORIZED);
+//            }
 
             $this->response->setData(['data' => new GetAnswer($answers)]);
         });

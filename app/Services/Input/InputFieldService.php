@@ -14,7 +14,11 @@ class InputFieldService extends Inputs
 {
     use InputField;
 
-    const SELECT_TYPE = 'select';
+    const VALID_TYPES = [
+        'select',
+        'radio',
+        'checkbox'
+    ];
 
     protected $inputFieldOptionsRepository;
     protected $inputFieldsRepository;
@@ -42,7 +46,8 @@ class InputFieldService extends Inputs
             'label'         =>  $data['label'],
             'description'   =>  $data['description'] ?? null,
             'validations'   =>  $data['validations'] ?? null,
-            'options'       =>  $data['options'] ?? null
+            'options'       =>  $data['options'] ?? null,
+            'summary'       =>  $data['summary'] ?? null
         ]);
     }
 
@@ -50,10 +55,11 @@ class InputFieldService extends Inputs
     {
         return $this->inputFieldsRepository->update($inputField, [
             'label'         =>  $data['label'],
-            'order'         =>  $data['order'] ?? $inputField->order,
+            'order'         =>  $data['order'] ?: $inputField->order,
             'description'   =>  $data['description'] ?? null,
             'validations'   =>  $data['validations'] ?? null,
-            'options'       =>  $data['options'] ?? null
+            'options'       =>  $data['options'] ?? null,
+            'summary'       =>  $data['summary'] ?? null
         ]);
     }
 
@@ -66,7 +72,7 @@ class InputFieldService extends Inputs
     {
         $validations = [];
         foreach ($inputFields as $inputField) {
-            $validations["{$inputField->name}.answer"] = $this->generateValidation($inputField->validations);
+            $validations["{$inputField->name}.*.answer"] = $this->generateValidation($inputField->validations);
         }
         return $validations;
     }
