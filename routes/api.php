@@ -14,9 +14,8 @@ use Illuminate\Http\Request;
 */
 
 $router->group(['prefix' => 'v1'], function () use ($router) {
-    $router->get('/manual', 'Management\QuestionController@manual');
-    $router->get('/cloud', 'SummaryController@wordCloud');
     $router->group(['middleware' => ['secret']], function () use ($router) {
+        $router->get('/cloud', 'SummaryController@wordCloud');
         $router->group(['prefix' => 'question'], function () use ($router) {
             $router->get('/{order}', 'QuestionnaireController@getQuestionnaire');
         });
