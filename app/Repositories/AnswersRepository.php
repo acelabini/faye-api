@@ -12,6 +12,36 @@ class AnswersRepository extends Repository
         $this->model = new Answers();
     }
 
+    public function getAnswers()
+    {
+        return $this->model
+            ->selectRaw("
+                answers.id as answer_id,
+                answers.device_address,
+                answers.questionnaire_id,
+                answers.created_at,
+                questionnaire_sets.id,
+                questionnaire_sets.set_id as set_id
+            ")
+            ->join('questionnaire_sets', 'questionnaire_sets.id', '=', 'answers.questionnaire_id')
+            ->whereNotNull('answers.device_address')
+            ->groupBy('answers.device_address')
+            ->orderBy('answers.created_at', 'desc')
+            ->get()
+            ;
+    }
+
+    public function countAnswered()
+    {
+        return $this->model
+            ->select('field_id', 'device_address')
+            ->whereNotNull('device_address')
+            ->groupBy('answers.field_id')
+            ->groupBy('answers.device_address')
+            ->get()
+            ;
+    }
+
     public function getSetAnswers($setId, $order = null)
     {
         return $this->model

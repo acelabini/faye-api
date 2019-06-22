@@ -38,6 +38,9 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         $router->get('/logout', 'Authentication\AuthenticationController@logout');
         $router->group(['middleware' => ['admin']], function () use ($router) {
             $router->group(['prefix' => 'management'], function () use ($router) {
+                $router->group(['prefix' => 'answers'], function () use ($router) {
+                    $router->get('/', 'AnswerController@getAnswerList');
+                });
                 $router->group(['prefix' => 'question'], function () use ($router) {
                     $router->get('/sets', 'Management\SetController@getQuestionSets');
                     $router->group(['prefix' => 'set'], function () use ($router) {

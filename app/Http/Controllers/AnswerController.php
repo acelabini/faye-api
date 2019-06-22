@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\Answers\AnswerList;
 use App\Http\Resources\Answers\GetAnswer;
 use App\Http\Resources\Sets\GetQuestionSets;
 use App\Http\Resources\Sets\QuestionSetsResource;
@@ -98,6 +99,15 @@ class AnswerController extends ApiController
 //            }
 
             $this->response->setData(['data' => new GetAnswer($answers)]);
+        });
+    }
+
+    public function getAnswerList()
+    {
+        return $this->runWithExceptionHandling(function () {
+            $answers = $this->answersRepository->getAnswers();
+
+            $this->response->setData(['data' => new AnswerList($answers)]);
         });
     }
 }
