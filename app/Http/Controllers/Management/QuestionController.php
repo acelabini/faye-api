@@ -160,29 +160,29 @@ class QuestionController extends ApiController
 
     public function manual()
     {
-//        $input = InputFields::create([
-//            'type_id'   =>  3,
-//            'question_id'   =>  10,
-//            'order' =>  5,
-//            'summary'   =>  'pie',
-//            'name' =>  'Address_label_j52t11',
-//            'label' =>  'Address',
-//            'description' => null,
-//            'validations' => null,
-//            'options'   =>  json_encode(["value" => "Select Barangay"])
-//        ]);
-//        InputFieldOptions::create([
-//            'input_field_id'    =>  $input->id,
-//            'label'             =>  'Select Barangay',
-//            'value'             =>  'Select Barangay'
-//        ]);
-//        foreach (LocationBarangays::all() as $barangay) {
-//            InputFieldOptions::create([
-//                'input_field_id'    =>  $input->id,
-//                'label'             =>  $barangay->name,
-//                'value'             =>  $barangay->name
-//            ]);
-//        }
+        $input = InputFields::create([
+            'type_id'   =>  3,
+            'question_id'   =>  10,
+            'order' =>  5,
+            'summary'   =>  'pie',
+            'name' =>  'Address_label_j52t11',
+            'label' =>  'Address',
+            'description' => null,
+            'validations' => null,
+            'options'   =>  json_encode(["value" => "Select Barangay"])
+        ]);
+        InputFieldOptions::create([
+            'input_field_id'    =>  $input->id,
+            'label'             =>  'Select Barangay',
+            'value'             =>  'Select Barangay'
+        ]);
+        foreach (LocationBarangays::all() as $barangay) {
+            InputFieldOptions::create([
+                'input_field_id'    =>  $input->id,
+                'label'             =>  $barangay->name,
+                'value'             =>  $barangay->name
+            ]);
+        }
 
     }
 }
