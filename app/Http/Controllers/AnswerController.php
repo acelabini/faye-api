@@ -101,13 +101,4 @@ class AnswerController extends ApiController
             $this->response->setData(['data' => new GetAnswer($answers)]);
         });
     }
-
-    public function getAnswerList()
-    {
-        return $this->runWithExceptionHandling(function () {
-            $answers = $this->answersRepository->getAnswers();
-
-            $this->response->setData(['data' => new AnswerList($answers)]);
-        });
-    }
 }

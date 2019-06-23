@@ -49,7 +49,7 @@ class SummaryController extends ApiController
             $data = [];
             $set = $this->questionSetService->getSet();
             $answers = $this->answersRepository->getSetAnswers($set->id, $order);
-                $cloud = (new NLPService([
+            $cloud = (new NLPService([
                 'question_set'  =>  $set
             ]))
                 ->getAnswers()->LDA()->topWords()->generateCloud()->getWords();

@@ -38,7 +38,8 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         $router->group(['middleware' => ['admin']], function () use ($router) {
             $router->group(['prefix' => 'management'], function () use ($router) {
                 $router->group(['prefix' => 'answers'], function () use ($router) {
-                    $router->get('/', 'AnswerController@getAnswerList');
+                    $router->get('/', 'Management\AnswerController@getAnswerList');
+                    $router->get('/{device_address}/{set_id}', 'Management\AnswerController@getAnswer');
                 });
                 $router->group(['prefix' => 'question'], function () use ($router) {
                     $router->get('/sets', 'Management\SetController@getQuestionSets');

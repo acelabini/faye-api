@@ -12,6 +12,36 @@ class AnswersRepository extends Repository
         $this->model = new Answers();
     }
 
+    public function getUserAnswersBySet($deviceAddress, $setId)
+    {
+        return $this->model
+            ->selectRaw("
+                answers.id as answer_id,
+                answers.device_address,
+                answers.questionnaire_id,
+                answers.created_at as answer_date,
+                questionnaire_sets.id,
+                questionnaire_sets.set_id as set_id,
+                question_sets.title as set_title,
+                question_sets.description as set_description,
+                questionnaire_sets.order as question_set_order,
+                questions.title as question_title,
+                questions.description as question_description,
+                questions.id as question_id,
+                answers.field_id,
+                input_fields.label as input_label,
+                answers.answer
+            ")
+            ->join('input_fields', 'input_fields.id', '=', 'answers.field_id')
+            ->join('questionnaire_sets', 'questionnaire_sets.id', '=', 'answers.questionnaire_id')
+            ->join('question_sets', 'question_sets.id', '=', 'questionnaire_sets.set_id')
+            ->join('questions', 'questions.id', '=', 'questionnaire_sets.question_id')
+            ->where('answers.device_address', $deviceAddress)
+            ->where('questionnaire_sets.set_id', $setId)
+            ->orderBy('questionnaire_sets.order', 'asc')
+            ->get();
+    }
+
     public function getAnswers()
     {
         return $this->model
@@ -21,22 +51,32 @@ class AnswersRepository extends Repository
                 answers.questionnaire_id,
                 answers.created_at,
                 questionnaire_sets.id,
-                questionnaire_sets.set_id as set_id
+                questionnaire_sets.set_id as set_id,
+                question_sets.title as set_title
             ")
             ->join('questionnaire_sets', 'questionnaire_sets.id', '=', 'answers.questionnaire_id')
+            ->join('question_sets', 'question_sets.id', '=', 'questionnaire_sets.set_id')
             ->whereNotNull('answers.device_address')
             ->groupBy('answers.device_address')
+            ->groupBy('questionnaire_sets.set_id')
             ->orderBy('answers.created_at', 'desc')
             ->get()
             ;
     }
 
-    public function countAnswered()
+    public function countAnswered($setId = null, $deviceAddress = null)
     {
         return $this->model
             ->select('field_id', 'device_address')
+            ->when($setId, function ($q) use ($setId) {
+                $q->where('questionnaire_sets.set_id', $setId);
+            })
+            ->when($deviceAddress, function ($q) use ($deviceAddress) {
+                $q->where('device_address', $deviceAddress);
+            })
+            ->join('questionnaire_sets', 'questionnaire_sets.id', '=', 'answers.questionnaire_id')
             ->whereNotNull('device_address')
-            ->groupBy('answers.field_id')
+            ->groupBy('answers.questionnaire_id')
             ->groupBy('answers.device_address')
             ->get()
             ;
