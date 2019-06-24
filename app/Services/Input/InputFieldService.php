@@ -31,6 +31,11 @@ class InputFieldService extends Inputs
         $this->inputFieldOptionsRepository = $inputFieldOptionsRepository;
     }
 
+    public function removeInputs(array $ids)
+    {
+        return $this->inputFieldsRepository->removeInputs($ids);
+    }
+
     public function getById($id)
     {
         return $this->inputFieldsRepository->getById($id);

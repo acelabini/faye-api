@@ -15,4 +15,11 @@ class InputFieldsRepository extends Repository
     {
         return $this->model->whereIn('id', $ids)->get();
     }
+
+    public function removeInputs(array $ids)
+    {
+        return $this->model
+            ->whereIn('id', $ids)
+            ->delete();
+    }
 }

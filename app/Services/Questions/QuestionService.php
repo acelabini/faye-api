@@ -72,6 +72,11 @@ class QuestionService
 
     public function update(Questions $question, array $data)
     {
+        $removeInputs = array_diff(
+                $question->inputs->pluck('id')->toArray(),
+                array_filter(array_column($data['inputs'], 'field_id'))
+        );
+        $this->inputFieldService->removeInputs($removeInputs);
         $question = $this->questionsRepository->update($question, [
             'title'        =>   $data['title'],
             'description'   =>  $data['description'] ?: $question->description
