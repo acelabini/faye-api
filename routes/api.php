@@ -41,6 +41,23 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
                     $router->get('/', 'Management\AnswerController@getAnswerList');
                     $router->get('/{device_address}/{set_id}', 'Management\AnswerController@getAnswer');
                 });
+                $router->group(['prefix' => 'locations'], function () use ($router) {
+                    $router->get('/', 'Management\LocationController@getLocations');
+                    $router->group(['prefix' => 'hazard-prone'], function () use ($router) {
+                        $router->get('/', 'Management\LocationController@getHazardsLocations');
+                        $router->get('/{hazardLocationId}', 'Management\LocationController@viewHazardLocation');
+                        $router->post('/', 'Management\LocationController@addHazardLocation');
+                        $router->patch('/{hazardLocationId}', 'Management\LocationController@editHazardLocation');
+                        $router->delete('/{hazardLocationId}', 'Management\LocationController@deleteHazardLocation');
+                    });
+                });
+                $router->group(['prefix' => 'hazards'], function () use ($router) {
+                    $router->get('/', 'Management\HazardController@getHazards');
+                    $router->post('/', 'Management\HazardController@addHazard');
+                    $router->get('/{hazardId}', 'Management\HazardController@viewHazard');
+                    $router->patch('/{hazardId}', 'Management\HazardController@editHazard');
+                    $router->delete('/{hazardId}', 'Management\HazardController@deleteHazard');
+                });
                 $router->group(['prefix' => 'question'], function () use ($router) {
                     $router->get('/sets', 'Management\SetController@getQuestionSets');
                     $router->group(['prefix' => 'set'], function () use ($router) {

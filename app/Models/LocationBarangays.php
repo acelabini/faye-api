@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -12,8 +13,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string name
  * @property string center
  * @property float area
- * @property \DateTime created_at
- * @property \DateTime deleted_at
+ * @property Carbon created_at
+ * @property Carbon deleted_at
  */
 class LocationBarangays extends Model
 {
