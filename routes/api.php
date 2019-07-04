@@ -73,6 +73,13 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
                     $router->patch('/{question_id}', 'Management\QuestionController@patchQuestion');
                     $router->delete('/{question_id}', 'Management\QuestionController@deleteQuestion');
                 });
+                $router->group(['prefix' => 'users'], function () use ($router) {
+                    $router->get('/roles', 'Management\UserController@getRoles');
+                    $router->get('/', 'Management\UserController@getUsers');
+                    $router->post('/', 'Management\UserController@addUser');
+                    $router->get('/{userId}', 'Management\UserController@viewUser');
+                    $router->patch('/{userId}', 'Management\UserController@editUser');
+                });
             });
         });
     });
