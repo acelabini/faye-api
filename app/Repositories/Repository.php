@@ -20,8 +20,21 @@ abstract class Repository implements RepositoryContract
         $this->setModel();
     }
 
-    public function getById($id)
+    public function all($withTrashed = false)
     {
+        if ($withTrashed) {
+            $this->model = $this->model::withTrashed();
+        }
+
+        return $this->model::all();
+    }
+
+    public function getById($id, $withTrashed = false)
+    {
+        if ($withTrashed) {
+            $this->model = $this->model::withTrashed();
+        }
+
         return $this->model::find($id);
     }
 

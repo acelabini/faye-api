@@ -18,7 +18,6 @@ class CreateQuestions extends Migration
             $table->integer('created_by');
             $table->string('title');
             $table->text('description')->nullable();
-            $table->integer('input_field_id');
             $table->timestamps();
             $table->softDeletes();
         });

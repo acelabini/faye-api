@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * Class InputFields
  * @package App\Models
  * @property integer type_id
+ * @property integer question_id
+ * @property integer order
  * @property string name
  * @property string label
  * @property string description
@@ -24,11 +26,14 @@ class InputFields extends Model
 
     protected $fillable = [
         'type_id',
+        'question_id',
+        'order',
         'name',
         'label',
         'description',
         'validations',
-        'options'
+        'options',
+        'summary',
     ];
 
     public function type()
@@ -36,8 +41,27 @@ class InputFields extends Model
         return $this->belongsTo(InputFieldType::class, 'type_id');
     }
 
-    public function options()
+    public function question()
+    {
+        return $this->belongsTo(Questions::class, 'question_id');
+    }
+
+    public function selectOptions()
     {
         return $this->hasMany(InputFieldOptions::class, 'input_field_id');
+    }
+
+    public function getGenerateOptionsAttribute()
+    {
+        $selectOptions = [];
+        foreach ($this->selectOptions as $option) {
+            $selectOptions[] = [
+                'id'    =>  $option->id,
+                'value' =>  $option->value,
+                'label' =>  $option->label
+            ];
+        }
+
+        return $selectOptions;
     }
 }

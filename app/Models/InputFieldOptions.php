@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Class InputFieldOptions
+ * Class InputField
  * @package App\Models
  * @property integer input_field_id
  * @property string label
