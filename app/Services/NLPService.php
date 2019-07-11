@@ -15,6 +15,8 @@ class NLPService
 {
     protected $words;
 
+    protected $originalWords;
+
     protected $topic;
 
     protected $train;
@@ -29,7 +31,7 @@ class NLPService
     {
         $this->questionSet = $data['question_set'] ?? null;
         $this->train = $data['train'] ?? 50;
-        $this->limitWords = $data['limitWords'] ?? 10;
+        $this->limitWords = $data['limitWords'] ?? 5;
         $this->top = $data['get_top'] ?? null;
     }
 
@@ -94,6 +96,7 @@ class NLPService
         if (!$this->words || !is_array($this->words)) {
             return $this;
         }
+        $this->originalWords = $this->words;
 
         $words = array_merge(...$this->words);
         arsort($words);
@@ -102,6 +105,25 @@ class NLPService
         $this->words = $this->top ? array_slice($words, 0, $this->top) : $words;
 
         return $this;
+    }
+
+    public function sortOriginal()
+    {
+        if (!$this->originalWords || !is_array($this->originalWords)) {
+            return $this;
+        }
+
+        $words = array_merge(...$this->originalWords);
+        $words = array_unique(array_map("str_singular", array_keys($words)));
+
+        $this->originalWords = $this->top ? array_slice($words, 0, $this->top) : $words;
+
+        return $this;
+    }
+
+    public function getOriginal()
+    {
+        return $this->originalWords;
     }
 
     public function generateCloud()

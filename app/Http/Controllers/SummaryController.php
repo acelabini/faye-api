@@ -49,10 +49,16 @@ class SummaryController extends ApiController
             $data = [];
             $set = $this->questionSetService->getSet();
             $answers = $this->answersRepository->getSetAnswers($set->id, $order);
-            $cloud = (new NLPService([
+            $analysis = (new NLPService([
                 'question_set'  =>  $set
-            ]))
-                ->getAnswers()->LDA()->topWords()->generateCloud()->getWords();
+            ]))->getAnswers()->LDA();
+            $thematicAnalysis = $analysis->getWords();
+            $cloud =
+//            ''
+                $analysis->topWords()
+                ->generateCloud()->getWords()
+            ;
+
             $percentage = $this->answersRepository->getPercentageAnswers($set->id, $order);
 
             foreach ($answers as $answer) {
@@ -89,6 +95,7 @@ class SummaryController extends ApiController
             }
 
             $data['cloud'] = $cloud;
+            $data['thematics_analysis'] = $thematicAnalysis;
 
             $this->response->setData(['data' => $data]);
         });
