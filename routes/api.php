@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 $router->group(['prefix' => 'v1'], function () use ($router) {
     $router->group(['middleware' => ['secret']], function () use ($router) {
         $router->get('/cloud', 'SummaryController@wordCloud');
+        $router->get('/performLDA/{setId}', 'SummaryController@getLDA');
         $router->group(['prefix' => 'question'], function () use ($router) {
             $router->get('/{order}', 'QuestionnaireController@getQuestionnaire');
         });

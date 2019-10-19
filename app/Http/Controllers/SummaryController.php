@@ -7,6 +7,7 @@ use App\Repositories\QuestionnaireSetsRepository;
 use App\Repositories\QuestionSetsRepository;
 use App\Services\Answer\AnswerService;
 use App\Services\Input\InputFieldService;
+use App\Services\LDAService;
 use App\Services\NLPService;
 use App\Services\Questions\QuestionService;
 use App\Sets\QuestionSetService;
@@ -30,7 +31,8 @@ class SummaryController extends ApiController
         AnswerService $answerService,
         QuestionnaireSetsRepository $questionnaireSetsRepository,
         QuestionSetService $questionSetService,
-        QuestionSetsRepository $questionSetsRepository
+        QuestionSetsRepository $questionSetsRepository,
+        LDAService $LDAService
     )
     {
         parent::__construct();
@@ -41,6 +43,7 @@ class SummaryController extends ApiController
         $this->questionnaireSetsRepository = $questionnaireSetsRepository;
         $this->questionSetService = $questionSetService;
         $this->questionSetsRepository = $questionSetsRepository;
+        $this->LDAService = $LDAService;
     }
 
     public function summary(Request $request, $device = null, $order = null)
@@ -118,5 +121,15 @@ class SummaryController extends ApiController
     public function wordCloud()
     {
 
+    }
+
+    public function getLDA($setId)
+    {
+        return $this->runWithExceptionHandling(function () use($setId) {
+            $lda = $this->LDAService->getLDA($setId);
+            $this->response->setData([
+                'data' => $lda
+            ]);
+        });
     }
 }
