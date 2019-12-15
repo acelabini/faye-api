@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LocationBarangays;
+use App\Models\QuestionSets;
 use App\Repositories\AnswersRepository;
 use App\Repositories\QuestionnaireSetsRepository;
 use App\Repositories\QuestionSetsRepository;
@@ -13,6 +15,7 @@ use App\Services\Questions\QuestionService;
 use App\Sets\QuestionSetService;
 use App\Utils\Enumerators\SummaryTypeEnumerator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class SummaryController extends ApiController
 {
@@ -46,19 +49,51 @@ class SummaryController extends ApiController
         $this->LDAService = $LDAService;
     }
 
+    public function summaryWithCategory(Request $request, QuestionSets $set, array $categories)
+    {
+        $answers = [];
+        $options = $request->get("options");
+        $nlp = (new NLPService([
+            'question_set'  =>  $set,
+            'options'       =>  [
+                'remove_symbols' => $options["remove_symbols"] ?? null,
+                'remove_numbers' => $options["remove_numbers"] ?? null,
+                'remove_duplicates' => $options["remove_duplicates"] ?? [],
+            ],
+            'stop_words'    =>  $request->get("stop_words") ?? null,
+            'categories'    =>  $request->get("category") ?? null
+        ]));
+        foreach ($categories as $category) {
+            $answers[$category] = $nlp->getAnswers($category)->clean()->LDA()->getWords();
+        }
+
+        return $answers;
+    }
+
     public function summary(Request $request, $device = null, $order = null)
     {
-        return $this->runWithExceptionHandling(function () use ($order, $device) {
+        return $this->runWithExceptionHandling(function () use ($request, $order, $device) {
             $data = [];
             $set = $this->questionSetService->getSet();
             $answers = $this->answersRepository->getSetAnswers($set->id, $order);
+            $options = $request->get("options") ? json_decode($request->get("options"), true) : [];
+            $settings = $request->get("settings") ? json_decode($request->get("settings"), true) : [];
             $analysis = (new NLPService([
-                'question_set'  =>  $set
-            ]))->getAnswers()->LDA();
+                'question_set'  =>  $set,
+                'options'       =>  [
+                    'remove_symbols' => $options["remove_symbols"] ?? null,
+                    'remove_numbers' => $options["remove_numbers"] ?? null,
+                    'remove_duplicates' => $options["remove_duplicates"] ?? [],
+                ],
+                'iterations'    =>  !empty($settings['number_iterations']) ? $settings['number_iterations'] : 50,
+                'limit_words'    =>  !empty($settings['number_words']) ? $settings['number_words'] : 5,
+                'number_of_topics'    =>  !empty($settings['number_topics']) ? $settings['number_topics'] : 5,
+                'stop_words'    =>  $request->get("stop_words") ?? null,
+                'categories'    =>  $request->get("categories") ?? null
+            ]))->getAnswers($request->get("category"))->clean()->LDA();
             $thematicAnalysis = $analysis->getWords();
             $cloud =
-//            ''
-                $analysis->topWords()
+                $analysis->topWords($request->get("category"))
                 ->generateCloud()->getWords()
             ;
 
@@ -123,10 +158,17 @@ class SummaryController extends ApiController
 
     }
 
-    public function getLDA($setId)
+    public function getLDA(Request $request, $setId)
     {
-        return $this->runWithExceptionHandling(function () use($setId) {
-            $lda = $this->LDAService->getLDA($setId);
+        return $this->runWithExceptionHandling(function () use($request, $setId) {
+            $settings = $request->get("settings") ? json_decode($request->get("settings"), true) : [];
+            $lda = $this->LDAService->getLDA([
+                'stop_words'    =>  $request->post("stop_words"),
+                'iterations'    =>  !empty($settings['number_iterations']) ? $settings['number_iterations'] : 50,
+                'limit_words'    =>  !empty($settings['number_words']) ? $settings['number_words'] : 5,
+                'number_of_topics'    =>  !empty($settings['number_topics']) ? $settings['number_topics'] : 5,
+                'model_name'    =>  !empty($settings['model_name']) ? $settings['model_name'] : 'defaultModel',
+            ], $setId);
             $this->response->setData([
                 'data' => $lda
             ]);

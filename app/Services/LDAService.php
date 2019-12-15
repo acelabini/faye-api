@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Repositories\AnswersRepository;
+use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Request;
 
 class LDAService
 {
@@ -13,34 +15,28 @@ class LDAService
         $this->answersRepository = $answersRepository;
     }
 
-    public function getLDA($setId)
+    public function getLDA(array $data, $setId)
     {
         $answers = $this->answersRepository->getCloudAnswers($setId)->toArray();
         $data = [
             'answers'       =>  array_column($answers, "answer"),
-            'model_name'    =>  'test',
+            'model_name'    =>  $data['model_name'] ?? null,
             'path'          =>  'jenLDA',
-            'num_topics'    =>  10
+            'num_topics'    =>  $data['number_of_topics'] ?? 10,
+            'stop_words'    =>  $data['stop_words'] ?? null,
+            'iterations'    =>  $data['iterations'] ?? 50,
+            'limit_words'   =>  $data['limit_words'] ?? 5
         ];
 
         $url = 'http://159.89.193.192/lda/createLDA.php';
-        // build the urlencoded data
-        $postData = http_build_query(['data' => $data]);
+        $client = new Client();
 
-        // open connection
-        $ch = curl_init();
+        $response = $client->post($url, [
+            'form_params'   =>  [
+                'data'  =>  $data
+            ]
+        ]);
 
-        // set the url, number of POST vars, POST data
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_POST, count($data));
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
-
-        // execute post
-        $result = curl_exec($ch);
-
-        // close connection
-        curl_close($ch);
-
-        return $result;
+        return $response->getBody()->getContents();
     }
 }

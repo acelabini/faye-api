@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\QuestionSets;
 use App\Repositories\AnswersRepository;
+use Illuminate\Support\Facades\Log;
 use NlpTools\FeatureFactories\DataAsFeatures;
 use NlpTools\Tokenizers\WhitespaceTokenizer;
 use NlpTools\Documents\TokensDocument;
@@ -19,34 +20,63 @@ class NLPService
 
     protected $topic;
 
-    protected $train;
+    protected $iterations;
 
     protected $limitWords;
+
+    protected $stopWords = [];
 
     protected $questionSet;
 
     protected $top;
 
+    protected $numberOfTopics;
+
+    protected $options = [];
+
+    protected $categories = [];
+
     public function __construct(array $data = [])
     {
         $this->questionSet = $data['question_set'] ?? null;
-        $this->train = $data['train'] ?? 50;
-        $this->limitWords = $data['limitWords'] ?? 5;
+        $this->iterations = $data['iterations'] ?? 50;
+        $this->limitWords = $data['limit_words'] ?? 5;
+        $this->numberOfTopics = $data['number_of_topics'] ?? 5;
         $this->top = $data['get_top'] ?? null;
+        $this->options = $data['options'] ?? null;
+        if (isset($data['stop_words'])) {
+            $stopWords = trim(preg_replace('/\s+/', '', $data['stop_words']));
+            $this->stopWords = explode(",", $stopWords);
+        }
+        $this->categories = !empty($data['categories']) ? json_decode($data['categories']) : [];
     }
 
-    public function LDA()
+    public function clean()
+    {
+        if (!$this->topic) {
+            return $this;
+        }
+        if (isset($this->options['remove_symbols'])) {
+            $this->topic = preg_replace("/[^a-zA-Z0-9 ]/i", "", strtolower($this->topic));
+        }
+        if (isset($this->options['remove_numbers'])) {
+            $this->topic = preg_replace("/[^a-zA-Z ]/i", "", strtolower($this->topic));
+        }
+
+        return $this;
+    }
+
+    public function LDA($topic = null)
     {
         if (!$this->topic) {
             return $this;
         }
 
-        $topic = preg_replace("/[^a-zA-Z ]/i", "", strtolower($this->topic));
         $tok = new WhitespaceTokenizer();
         $tset = new TrainingSet();
-        $stopWords = config('stop_words');
+        $stopWords = array_merge($this->stopWords, config('stop_words'));
         $stop = new StopWords($stopWords);
-        $d = new TokensDocument(explode(" ", $topic));
+        $d = new TokensDocument(explode(" ", $topic ?: $this->topic));
         $d->applyTransformation($stop);
 
         $tset->addDocument(
@@ -60,19 +90,19 @@ class NLPService
 
         $lda = new Lda(
             new DataAsFeatures(), // a feature factory to transform the document data
-            5, // the number of topics we want
+            $this->numberOfTopics, // the number of topics we want
             1, // the dirichlet prior assumed for the per document topic distribution
             1  // the dirichlet prior assumed for the per word topic distribution
         );
 
-        $lda->train($tset, $this->train);
+        $lda->train($tset, $this->iterations);
 
         $this->words = $lda->getWordsPerTopicsProbabilities($this->limitWords);
 
         return $this;
     }
 
-    public function getAnswers()
+    public function getAnswers($category = null)
     {
         if (!$this->questionSet || !($this->questionSet instanceof QuestionSets)) {
             return $this;
@@ -83,6 +113,13 @@ class NLPService
 
         $concat = "";
         foreach ($answers as $answer) {
+            if ($category) {
+                $category = str_replace('"', "", $category);
+                $categories = $answersRepo->getCategory($category, $answer['device_address']);
+                if ($categories->isEmpty()) {
+                    continue;
+                }
+            }
             $concat .= $answer['answer'];
         }
 
@@ -91,7 +128,7 @@ class NLPService
         return $this;
     }
 
-    public function topWords()
+    public function topWords($category = null)
     {
         if (!$this->words || !is_array($this->words)) {
             return $this;
@@ -102,7 +139,10 @@ class NLPService
         arsort($words);
         $words = array_unique(array_map("str_singular", array_keys($words)));
 
-        $this->words = $this->top ? array_slice($words, 0, $this->top) : $words;
+        $this->words = $this->numberOfTopics ? array_slice($words, 0, $this->numberOfTopics) : $words;
+        if ($category) {
+            $this->words = $words;
+        }
 
         return $this;
     }
@@ -116,7 +156,7 @@ class NLPService
         $words = array_merge(...$this->originalWords);
         $words = array_unique(array_map("str_singular", array_keys($words)));
 
-        $this->originalWords = $this->top ? array_slice($words, 0, $this->top) : $words;
+        $this->originalWords = $this->numberOfTopics ? array_slice($words, 0, $this->numberOfTopics) : $words;
 
         return $this;
     }

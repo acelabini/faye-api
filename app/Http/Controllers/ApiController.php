@@ -49,7 +49,6 @@ class ApiController extends Controller
         } catch (JWTException $e) {
             throw new ApiException($e->getMessage(), Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (Exception $e) {
-            Log::info($e->getMessage());
             throw new ApiException($e->getMessage(), $e->getCode());
         }
     }

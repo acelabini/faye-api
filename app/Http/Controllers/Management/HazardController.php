@@ -6,10 +6,12 @@ use App\Http\Controllers\ApiController;
 use App\Http\Resources\Hazards\GetHazard;
 use App\Http\Resources\Hazards\LocationHazard;
 use App\Repositories\HazardsRepository;
+use App\Repositories\IncidentReportRepository;
 use App\Repositories\LocationHazardsRepository;
 use App\Utils\Enumerators\HazardEnumerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class HazardController extends ApiController
@@ -18,10 +20,15 @@ class HazardController extends ApiController
 
     protected $locationHazardsRepository;
 
-    public function __construct(HazardsRepository $hazardsRepository)
-    {
+    protected $incidentReportRepository;
+
+    public function __construct(
+        HazardsRepository $hazardsRepository,
+        IncidentReportRepository $incidentReportRepository
+    ) {
         parent::__construct();
         $this->hazardsRepository = $hazardsRepository;
+        $this->incidentReportRepository = $incidentReportRepository;
     }
 
     public function viewHazard(Request $request, $hazardId)
@@ -100,6 +107,37 @@ class HazardController extends ApiController
             $this->hazardsRepository->delete($hazard);
 
             $this->response->setData(['data' => $hazard]);
+        });
+    }
+
+    public function reportIncident(Request $request)
+    {
+        return $this->runWithExceptionHandling(function () use ($request) {
+            $this->validate($request, [
+                'report_name'      =>  'required|string',
+                'report_message'   =>  'required',
+                'report_media'     =>  'required|max:3000|mimes:video/x-ms-asf,video/x-flv,video/mp4,application/x-mpegURL,video/MP2T,video/3gpp,video/quicktime,video/x-msvideo,video/x-ms-wmv,video/avi,jpeg,jpg,png'
+            ]);
+
+            $file = $request->file("report_media");
+            $fileName = date("YmdHis")."_". uniqid()."_".$file->getClientOriginalName();
+            $file->move(public_path("incident-report"), $fileName);
+            $report = $this->incidentReportRepository->create([
+                'name'      =>  $request->get('report_name'),
+                'message'   =>  $request->get('report_message'),
+                'media'     =>  $fileName
+            ]);
+
+            $this->response->setData(['data' => $report]);
+        });
+    }
+
+    public function getReportIncidents(Request $request)
+    {
+        return $this->runWithExceptionHandling(function () use ($request) {
+            $reports = $this->incidentReportRepository->getReports();
+
+            $this->response->setData(['data' => $reports]);
         });
     }
 }

@@ -161,6 +161,7 @@ class AnswersRepository extends Repository
                 answers.questionnaire_id,
                 answers.answer,
                 answers.field_id,
+                answers.device_address,
                 input_fields.id,
                 input_fields.summary,
                 questionnaire_sets.order,
@@ -179,5 +180,13 @@ class AnswersRepository extends Repository
             ->orderBy('questionnaire_sets.order', 'asc')
             ->get()
             ;
+    }
+
+    public function getCategory($categories, string $deviceAddress)
+    {
+        return $this->model
+            ->where('device_address', $deviceAddress)
+            ->where('answer', $categories)
+            ->get();
     }
 }

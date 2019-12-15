@@ -16,7 +16,7 @@ use Illuminate\Http\Request;
 $router->group(['prefix' => 'v1'], function () use ($router) {
     $router->group(['middleware' => ['secret']], function () use ($router) {
         $router->get('/cloud', 'SummaryController@wordCloud');
-        $router->get('/performLDA/{setId}', 'SummaryController@getLDA');
+        $router->post('/performLDA/{setId}', 'SummaryController@getLDA');
         $router->group(['prefix' => 'question'], function () use ($router) {
             $router->get('/{order}', 'QuestionnaireController@getQuestionnaire');
         });
@@ -25,12 +25,17 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         });
         $router->group(['prefix' => 'answer'], function () use ($router) {
             $router->get('/summary/{device?}/{order?}', 'SummaryController@summary');
+            $router->post('/summary/{device?}/{order?}', 'SummaryController@summary');
             $router->get('/{order}', 'AnswerController@getAnswer');
             $router->post('/{order?}', 'AnswerController@answer');
         });
         $router->group(['middleware' => ['guest']], function () use ($router) {
             $router->post('/register', 'Authentication\RegisterController@createQuestion');
             $router->post('/login', 'Authentication\AuthenticationController@login');
+
+            $router->group(['prefix' => 'incident-report'], function () use ($router) {
+                $router->post('/', 'Management\HazardController@reportIncident');
+            });
         });
     });
     $router->group(['middleware' => ['auth.jwt']], function () use ($router) {
@@ -80,6 +85,9 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
                     $router->post('/', 'Management\UserController@addUser');
                     $router->get('/{userId}', 'Management\UserController@viewUser');
                     $router->patch('/{userId}', 'Management\UserController@editUser');
+                });
+                $router->group(['prefix' => 'incident-report'], function () use ($router) {
+                    $router->get('/', 'Management\HazardController@getReportIncidents');
                 });
             });
         });
