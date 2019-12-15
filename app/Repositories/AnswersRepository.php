@@ -182,7 +182,7 @@ class AnswersRepository extends Repository
             ;
     }
 
-    public function getCategory($categories, string $deviceAddress)
+    public function getCategory($categories, $deviceAddress)
     {
         return $this->model
             ->where('device_address', $deviceAddress)

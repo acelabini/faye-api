@@ -9,6 +9,7 @@ use App\Repositories\RolesRepository;
 use App\Repositories\UserRepository;
 use App\Utils\Enumerators\UserStatusEnumerator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class UserController extends ApiController
@@ -83,6 +84,7 @@ class UserController extends ApiController
                 'name'      =>  $request->get('name'),
                 'email'     =>  $request->get('email'),
                 'role_id'   =>  $request->get('role_id'),
+                'password'  =>  Hash::make($request->has("password") ? $request->get("password") : "password"),
                 'status'    =>  $request->get('status')
             ]);
             $this->response->setData(['data' => new User($user)]);

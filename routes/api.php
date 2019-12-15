@@ -32,10 +32,9 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         $router->group(['middleware' => ['guest']], function () use ($router) {
             $router->post('/register', 'Authentication\RegisterController@createQuestion');
             $router->post('/login', 'Authentication\AuthenticationController@login');
-
-            $router->group(['prefix' => 'incident-report'], function () use ($router) {
-                $router->post('/', 'Management\HazardController@reportIncident');
-            });
+        });
+        $router->group(['prefix' => 'incident-report'], function () use ($router) {
+            $router->post('/', 'Management\HazardController@reportIncident');
         });
     });
     $router->group(['middleware' => ['auth.jwt']], function () use ($router) {
