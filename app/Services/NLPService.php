@@ -97,7 +97,7 @@ class NLPService
 
         $lda->train($tset, $this->iterations);
 
-        $this->words = $lda->getWordsPerTopicsProbabilities($this->limitWords);
+        $this->words = $lda->getPhi($this->limitWords);
 
         return $this;
     }

@@ -165,10 +165,11 @@ class SummaryController extends ApiController
             $lda = $this->LDAService->getLDA([
                 'stop_words'    =>  $request->post("stop_words"),
                 'iterations'    =>  !empty($settings['number_iterations']) ? $settings['number_iterations'] : 50,
-                'limit_words'    =>  !empty($settings['number_words']) ? $settings['number_words'] : 5,
-                'number_of_topics'    =>  !empty($settings['number_topics']) ? $settings['number_topics'] : 5,
-                'model_name'    =>  !empty($settings['model_name']) ? $settings['model_name'] : 'defaultModel',
-            ], $setId);
+                'limit_words'   =>  !empty($settings['number_words']) ? $settings['number_words'] : 5,
+                'number_of_topics'  =>  !empty($settings['number_topics']) ? $settings['number_topics'] : 5,
+                'model_name'        =>  $request->get("new_model_name") ?:
+                    (empty($settings['model_name']) ? $settings['model_name'] : 'defaultModel'),
+            ], $setId, $request->get("category"));
             $this->response->setData([
                 'data' => $lda
             ]);

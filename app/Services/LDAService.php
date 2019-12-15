@@ -15,11 +15,23 @@ class LDAService
         $this->answersRepository = $answersRepository;
     }
 
-    public function getLDA(array $data, $setId)
+    public function getLDA(array $data, $setId, $category = null)
     {
         $answers = $this->answersRepository->getCloudAnswers($setId)->toArray();
+        $postAnswers = [];
+        foreach ($answers as $answer) {
+            if ($category) {
+                $category = str_replace('"', "", $category);
+                $categories = $this->answersRepository->getCategory($category, $answer['device_address']);
+                if ($categories->isEmpty()) {
+                    continue;
+                }
+            }
+            $postAnswers[] = $answer['answer'];
+        }
+
         $data = [
-            'answers'       =>  array_column($answers, "answer"),
+            'answers'       =>  $postAnswers, //array_column($answers, "answer")
             'model_name'    =>  $data['model_name'] ?? null,
             'path'          =>  'jenLDA',
             'num_topics'    =>  $data['number_of_topics'] ?? 10,
