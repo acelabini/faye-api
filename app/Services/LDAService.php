@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Repositories\AnswersRepository;
+use App\Repositories\IncidentReportRepository;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
 
@@ -15,19 +16,30 @@ class LDAService
         $this->answersRepository = $answersRepository;
     }
 
-    public function getLDA(array $data, $setId, $category = null)
+    public function getLDA(array $data, $setId = null, $category = null)
     {
-        $answers = $this->answersRepository->getCloudAnswers($setId)->toArray();
         $postAnswers = [];
-        foreach ($answers as $answer) {
-            if ($category) {
-                $category = str_replace('"', "", $category);
-                $categories = $this->answersRepository->getCategory($category, $answer['device_address']);
-                if ($categories->isEmpty()) {
-                    continue;
+        if ($setId ) {
+            $answers = $this->answersRepository->getCloudAnswers($setId)->toArray();
+            foreach ($answers as $answer) {
+                if ($category) {
+                    $category = str_replace('"', "", $category);
+                    $categories = $this->answersRepository->getCategory($category, $answer['device_address']);
+                    if ($categories->isEmpty()) {
+                        continue;
+                    }
                 }
+                $postAnswers[] = $answer['answer'];
             }
-            $postAnswers[] = $answer['answer'];
+        } else {
+            $reportRepo = app()->make(IncidentReportRepository::class);
+            $reports = $reportRepo->search([
+                ['status', 'confirmed']
+            ]);
+
+            foreach ($reports as $report) {
+                $postAnswers[] = $report->message;
+            }
         }
 
         $data = [

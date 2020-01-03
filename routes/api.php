@@ -16,7 +16,7 @@ use Illuminate\Http\Request;
 $router->group(['prefix' => 'v1'], function () use ($router) {
     $router->group(['middleware' => ['secret']], function () use ($router) {
         $router->get('/cloud', 'SummaryController@wordCloud');
-        $router->post('/performLDA/{setId}', 'SummaryController@getLDA');
+        $router->post('/performLDA/{setId?}', 'SummaryController@getLDA');
         $router->group(['prefix' => 'question'], function () use ($router) {
             $router->get('/{order}', 'QuestionnaireController@getQuestionnaire');
         });
@@ -42,6 +42,7 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         $router->get('/logout', 'Authentication\AuthenticationController@logout');
         $router->group(['middleware' => ['admin']], function () use ($router) {
             $router->group(['prefix' => 'management'], function () use ($router) {
+                $router->post('/summary/reports', 'SummaryController@reportSummary');
                 $router->group(['prefix' => 'answers'], function () use ($router) {
                     $router->get('/', 'Management\AnswerController@getAnswerList');
                     $router->get('/{device_address}/{set_id}', 'Management\AnswerController@getAnswer');

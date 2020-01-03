@@ -70,16 +70,10 @@ class SummaryController extends ApiController
         return $answers;
     }
 
-    public function summary(Request $request, $device = null, $order = null)
+    public function reportSummary(Request $request)
     {
-        return $this->runWithExceptionHandling(function () use ($request, $order, $device) {
-            $data = [];
-            $set = $this->questionSetService->getSet();
-            $answers = $this->answersRepository->getSetAnswers($set->id, $order);
-            $options = $request->get("options") ? json_decode($request->get("options"), true) : [];
-            $settings = $request->get("settings") ? json_decode($request->get("settings"), true) : [];
+        return $this->runWithExceptionHandling(function () use ($request) {
             $analysis = (new NLPService([
-                'question_set'  =>  $set,
                 'options'       =>  [
                     'remove_symbols' => $options["remove_symbols"] ?? null,
                     'remove_numbers' => $options["remove_numbers"] ?? null,
@@ -88,48 +82,91 @@ class SummaryController extends ApiController
                 'iterations'    =>  !empty($settings['number_iterations']) ? $settings['number_iterations'] : 50,
                 'limit_words'    =>  !empty($settings['number_words']) ? $settings['number_words'] : 5,
                 'number_of_topics'    =>  !empty($settings['number_topics']) ? $settings['number_topics'] : 5,
-                'stop_words'    =>  $request->get("stop_words") ?? null,
-                'categories'    =>  $request->get("categories") ?? null
-            ]))->getAnswers($request->get("category"))->clean()->LDA();
+                'stop_words'    =>  $request->get("stop_words") ?? null
+            ]))->getReports()->clean()->LDA();
+
+            $this->response->setData(['data' => [
+                'thematics_analysis' => $analysis->getWords()
+            ]]);
+        });
+    }
+
+    public function summary(Request $request, $device = null, $order = null)
+    {
+        return $this->runWithExceptionHandling(function () use ($request, $order, $device) {
+            $data = [];
+            $options = $request->get("options") ? json_decode($request->get("options"), true) : [];
+            $settings = $request->get("settings") ? json_decode($request->get("settings"), true) : [];
+            $optionData = [
+                'options'       =>  [
+                    'remove_symbols' => $options["remove_symbols"] ?? null,
+                    'remove_numbers' => $options["remove_numbers"] ?? null,
+                    'remove_duplicates' => $options["remove_duplicates"] ?? [],
+                ],
+                'iterations'    =>  !empty($settings['number_iterations']) ? $settings['number_iterations'] : 50,
+                'limit_words'    =>  !empty($settings['number_words']) ? $settings['number_words'] : 5,
+                'number_of_topics'    =>  !empty($settings['number_topics']) ? $settings['number_topics'] : 5,
+                'stop_words'    =>  $request->get("stop_words") ?? null
+            ];
+            if ($request->get("data_category") === 'Incident Report') {
+                $category = true;
+                $analysis = (new NLPService($optionData))->getReports()->clean()->LDA();
+            } else {
+                $category = $request->get("category");
+                $set = $this->questionSetService->getSet();
+                $answers = $this->answersRepository->getSetAnswers($set->id, $order);
+                $analysis = (new NLPService(array_merge($optionData, [
+                    'question_set' => $set
+                ])))->getAnswers($category)->clean()->LDA();
+            }
             $thematicAnalysis = $analysis->getWords();
+            $c = 0;
+            foreach ($thematicAnalysis as $analysis) {
+                foreach ($analysis as $a)
+                $c +=$a;
+            }
+            Log::info($c);
             $cloud =
-                $analysis->topWords($request->get("category"))
+                $analysis->topWords($category)
                 ->generateCloud()->getWords()
             ;
 
-            $percentage = $this->answersRepository->getPercentageAnswers($set->id, $order);
-
-            foreach ($answers as $answer) {
-                switch ($answer->summary) {
-                    case SummaryTypeEnumerator::PIE:
-                        //[$answer->questionnaire_id][$answer->field_id][$answer->input_label]
-                        $data['pie'][$answer->questionnaire_id][$answer->input_label]['label'][] = $answer->answer;
-                        $data['pie'][$answer->questionnaire_id][$answer->input_label]['data'][] = $answer->total;
-                        $data['pie'][$answer->questionnaire_id][$answer->input_label]['backgroundColor'][] = $this->generateColor();
-                        break;
-                    case SummaryTypeEnumerator::BAR:
-                        $data['bar'][$answer->questionnaire_id][$answer->input_label]['label'][] = $answer->answer;
-                        $data['bar'][$answer->questionnaire_id][$answer->input_label]['data'][] = $answer->total;
-                        $data['bar'][$answer->questionnaire_id][$answer->input_label]['backgroundColor'][] =
-                            $this->generateColor(true);
-                        break;
-                    default:
-                        break;
+            if (isset($answers)) {
+                foreach ($answers as $answer) {
+                    switch ($answer->summary) {
+                        case SummaryTypeEnumerator::PIE:
+                            //[$answer->questionnaire_id][$answer->field_id][$answer->input_label]
+                            $data['pie'][$answer->questionnaire_id][$answer->input_label]['label'][] = $answer->answer;
+                            $data['pie'][$answer->questionnaire_id][$answer->input_label]['data'][] = $answer->total;
+                            $data['pie'][$answer->questionnaire_id][$answer->input_label]['backgroundColor'][] = $this->generateColor();
+                            break;
+                        case SummaryTypeEnumerator::BAR:
+                            $data['bar'][$answer->questionnaire_id][$answer->input_label]['label'][] = $answer->answer;
+                            $data['bar'][$answer->questionnaire_id][$answer->input_label]['data'][] = $answer->total;
+                            $data['bar'][$answer->questionnaire_id][$answer->input_label]['backgroundColor'][] =
+                                $this->generateColor(true);
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
 
-            foreach ($percentage as $percent) {
-                $myAnswer = $this->answersRepository->search([
-                    ['device_address', $device],
-                    ['questionnaire_id', $percent->questionnaire_id],
-                    ['field_id', $percent->field_id],
-                ])->first();
-                $data['percentage'][$percent->questionnaire_id][$percent->input_label] = [
-                    'label'     =>  $percent->label,
-                    'respondents'   =>  number_format($percent->total),
-                    'data'      =>  number_format($percent->answerSum / $percent->total, 2),
-                    'answer'    =>  optional($myAnswer)->answer
-                ];
+            if (isset($set)) {
+                $percentage = $this->answersRepository->getPercentageAnswers($set->id, $order);
+                foreach ($percentage as $percent) {
+                    $myAnswer = $this->answersRepository->search([
+                        ['device_address', $device],
+                        ['questionnaire_id', $percent->questionnaire_id],
+                        ['field_id', $percent->field_id],
+                    ])->first();
+                    $data['percentage'][$percent->questionnaire_id][$percent->input_label] = [
+                        'label' => $percent->label,
+                        'respondents' => number_format($percent->total),
+                        'data' => number_format($percent->answerSum / $percent->total, 2),
+                        'answer' => optional($myAnswer)->answer
+                    ];
+                }
             }
 
             $data['cloud'] = $cloud;
@@ -158,7 +195,7 @@ class SummaryController extends ApiController
 
     }
 
-    public function getLDA(Request $request, $setId)
+    public function getLDA(Request $request, $setId = null)
     {
         return $this->runWithExceptionHandling(function () use($request, $setId) {
             $settings = $request->get("settings") ? json_decode($request->get("settings"), true) : [];

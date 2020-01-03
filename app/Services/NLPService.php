@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\QuestionSets;
 use App\Repositories\AnswersRepository;
+use App\Repositories\IncidentReportRepository;
 use Illuminate\Support\Facades\Log;
 use NlpTools\FeatureFactories\DataAsFeatures;
 use NlpTools\Tokenizers\WhitespaceTokenizer;
@@ -98,6 +99,23 @@ class NLPService
         $lda->train($tset, $this->iterations);
 
         $this->words = $lda->getPhi($this->limitWords);
+
+        return $this;
+    }
+
+    public function getReports()
+    {
+        $reportRepo = app()->make(IncidentReportRepository::class);
+        $reports = $reportRepo->search([
+            ['status', 'confirmed']
+        ]);
+
+        $concat = "";
+        foreach ($reports as $report) {
+            $concat .= " ".$report->message;
+        }
+
+        $this->topic = $concat;
 
         return $this;
     }
