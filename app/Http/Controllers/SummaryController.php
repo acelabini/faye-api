@@ -120,12 +120,6 @@ class SummaryController extends ApiController
                 ])))->getAnswers($category)->clean()->LDA();
             }
             $thematicAnalysis = $analysis->getWords();
-            $c = 0;
-            foreach ($thematicAnalysis as $analysis) {
-                foreach ($analysis as $a)
-                $c +=$a;
-            }
-            Log::info($c);
             $cloud =
                 $analysis->topWords($category)
                 ->generateCloud()->getWords()
