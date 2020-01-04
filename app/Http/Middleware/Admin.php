@@ -23,7 +23,7 @@ class Admin
             return $this->notFoundResponse();
         }
 
-        if ($request->user()->role_id !== RolesEnumerator::ADMIN) {
+        if ((int)$request->user()->role_id !== RolesEnumerator::ADMIN) {
             return $this->notFoundResponse();
         }
 
