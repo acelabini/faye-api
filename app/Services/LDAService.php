@@ -43,13 +43,13 @@ class LDAService
         }
 
         $data = [
-            'answers'       =>  $postAnswers, //array_column($answers, "answer")
             'model_name'    =>  $data['model_name'] ?? null,
             'path'          =>  'jenLDA',
             'num_topics'    =>  $data['number_of_topics'] ?? 10,
             'stop_words'    =>  $data['stop_words'] ?? null,
             'iterations'    =>  $data['iterations'] ?? 50,
-            'limit_words'   =>  $data['limit_words'] ?? 5
+            'limit_words'   =>  $data['limit_words'] ?? 5,
+            'answers'       =>  $postAnswers,
         ];
 
         $url = 'http://159.89.193.192/lda/createLDA.php';
