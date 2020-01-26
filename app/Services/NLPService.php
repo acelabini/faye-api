@@ -19,6 +19,8 @@ class NLPService
 
     protected $originalWords;
 
+    protected $thematic;
+
     protected $topic;
 
     protected $iterations;
@@ -95,22 +97,38 @@ class NLPService
             new DataAsFeatures(), // a feature factory to transform the document data
             $this->numberOfTopics, // the number of topics we want
             1, // the dirichlet prior assumed for the per document topic distribution
-            0.00000001  // the dirichlet prior assumed for the per word topic distribution
+            1  // the dirichlet prior assumed for the per word topic distribution
         );
 
         $lda->train($tset, $this->iterations);
 
-        $this->words = $lda->getPhi($this->limitWords);
+        $this->words = $lda->getPhi(); //$this->limitWords
+        $words = $this->words[0] ?? $this->words;
+        $size = count($words) / $this->numberOfTopics;
+        $words = array_chunk($words, $size,true); // true to preserve the keys
 
-//        $x = 0;
-//        foreach ($this->words as $k => $v) {
-//            foreach ($v as $item) {
-//                $x += $item;
-//            }
-//        }
-//        Log::info($x);
+        $params = [];
+        foreach ($words as $key => $word) {
+            $sum = array_sum($word);
+            array_splice($word, $this->limitWords);
+            if (($key+1)> $this->numberOfTopics) {
+                $params[count($params)-1]['params'] += $sum;
+                continue;
+            }
+            $params[] = [
+                'params' => $sum,
+                'words' => array_keys($word)
+            ];
+        }
+
+        $this->thematic = $params;
 
         return $this;
+    }
+
+    public function getThematic()
+    {
+        return $this->thematic;
     }
 
     public function getReports()
