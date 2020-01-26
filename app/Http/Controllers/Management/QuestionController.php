@@ -9,6 +9,7 @@ use App\Models\InputFieldOptions;
 use App\Models\InputFields;
 use App\Models\InputFieldType;
 use App\Models\LocationBarangays;
+use App\Repositories\ProcessedDataRepository;
 use App\Repositories\QuestionsRepository;
 use App\Repositories\UserRepository;
 use App\Services\Questions\QuestionService;
@@ -23,18 +24,21 @@ class QuestionController extends ApiController
     protected $questionsRepository;
     protected $questionSetService;
     protected $userRepository;
+    protected $processedDataRepository;
 
     public function __construct(
         QuestionService $questionService,
         QuestionSetService $questionSetService,
         QuestionsRepository $questionsRepository,
-        UserRepository $userRepository
+        UserRepository $userRepository,
+        ProcessedDataRepository $processedDataRepository
     ) {
         parent::__construct();
         $this->questionService = $questionService;
         $this->questionSetService = $questionSetService;
         $this->questionsRepository = $questionsRepository;
         $this->userRepository = $userRepository;
+        $this->processedDataRepository = $processedDataRepository;
     }
 
     /**
@@ -183,6 +187,39 @@ class QuestionController extends ApiController
                 'value'             =>  $barangay->name
             ]);
         }
+    }
 
+    public function getPublishedData()
+    {
+        return $this->runWithExceptionHandling(function () {
+            $published = $this->processedDataRepository->all();
+            foreach ($published as &$item) {
+                $item->processed_by = $item->processedBy;
+            }
+
+            $this->response->setData(['data' => $published]);
+        });
+    }
+
+    public function deletePublishedData(Request $request, $id)
+    {
+        return $this->runWithExceptionHandling(function () use ($id) {
+            $processed = $this->processedDataRepository->get($id);
+            $this->processedDataRepository->delete($processed);
+
+            $this->response->setData(['data' => $processed]);
+        });
+    }
+
+    public function patchPublishedData(Request $request, $id)
+    {
+        return $this->runWithExceptionHandling(function () use ($id) {
+            $processed = $this->processedDataRepository->get($id);
+            $this->processedDataRepository->update($processed, [
+                'publish' => !$processed->publish
+            ]);
+
+            $this->response->setData(['data' => $processed]);
+        });
     }
 }

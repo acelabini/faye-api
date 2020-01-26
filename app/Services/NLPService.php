@@ -27,6 +27,8 @@ class NLPService
 
     protected $stopWords = [];
 
+    protected $cloudWords;
+
     protected $questionSet;
 
     protected $top;
@@ -45,7 +47,7 @@ class NLPService
         $this->numberOfTopics = $data['number_of_topics'] ?? 5;
         $this->top = $data['get_top'] ?? null;
         $this->options = $data['options'] ?? null;
-        if (isset($data['stop_words'])) {
+        if (isset($data['stop_words']) && !is_array($data['stop_words'])) {
             $stopWords = trim(preg_replace('/\s+/', '', $data['stop_words']));
             $this->stopWords = explode(",", $stopWords);
         }
@@ -93,12 +95,20 @@ class NLPService
             new DataAsFeatures(), // a feature factory to transform the document data
             $this->numberOfTopics, // the number of topics we want
             1, // the dirichlet prior assumed for the per document topic distribution
-            1  // the dirichlet prior assumed for the per word topic distribution
+            0.00000001  // the dirichlet prior assumed for the per word topic distribution
         );
 
         $lda->train($tset, $this->iterations);
 
         $this->words = $lda->getPhi($this->limitWords);
+
+//        $x = 0;
+//        foreach ($this->words as $k => $v) {
+//            foreach ($v as $item) {
+//                $x += $item;
+//            }
+//        }
+//        Log::info($x);
 
         return $this;
     }
@@ -116,6 +126,13 @@ class NLPService
         }
 
         $this->topic = $concat;
+
+        return $this;
+    }
+
+    public function setTopic($topic)
+    {
+        $this->topic = preg_replace('/\s+/', ' ', $topic);;
 
         return $this;
     }
@@ -138,7 +155,8 @@ class NLPService
                     continue;
                 }
             }
-            $concat .= $answer['answer'];
+            $ans = preg_replace('/\s+/', ' ', $answer['answer']);
+            $concat .= $ans. " ";
         }
 
         $this->topic = $concat;
@@ -146,23 +164,35 @@ class NLPService
         return $this;
     }
 
-    public function topWords($category = null)
+    public function topWords($category = null, $topic = null)
     {
-        if (!$this->words || !is_array($this->words)) {
+        $stopWords = array_merge($this->stopWords, config('stop_words'));
+        $words = $topic ? explode(" ", $topic) : ($this->words ?: $this->topic);
+        if (!$words) {
             return $this;
         }
-        $this->originalWords = $this->words;
-
-        $words = array_merge(...$this->words);
-        arsort($words);
-        $words = array_unique(array_map("str_singular", array_keys($words)));
-
-        $this->words = $this->numberOfTopics ? array_slice($words, 0, $this->numberOfTopics) : $words;
-        if ($category) {
-            $this->words = $words;
+        if (is_string($words)) {
+            $words = explode(" ", $words);
+        }
+        $words = $this->originalWords = array_diff($words, $stopWords);
+        if (!$topic && $category) {
+            $words = array_merge(...$words);
+            $words = array_map("str_singular", array_keys($words));
         }
 
+        $this->cloudWords = array_count_values($words);
+        if ($this->options['remove_duplicates']) {
+            $words = array_unique($words);
+        }
+//        $this->cloudWords = $this->numberOfTopics ? array_slice($words, 0, $this->numberOfTopics) : $words;
+        $this->topic = $words;
+
         return $this;
+    }
+
+    public function toString($data = null)
+    {
+        return implode(" ", $data ?: $this->topic);
     }
 
     public function sortOriginal()
@@ -186,22 +216,23 @@ class NLPService
 
     public function generateCloud()
     {
-        if (!is_array($this->words)) {
+        if (!is_array($this->cloudWords)) {
             return $this;
         }
-
+        arsort($this->cloudWords);
         $data = [];
         $size = 40;
         $c = 0;
-        foreach ($this->words as $key => $word) {
+        foreach ($this->cloudWords as $word => $count) {
             $data[] = [
                 "text"      =>  $word,
                 "weight"    =>  $size > 0 ? $size : 1
             ];
-            if ($c < 5) {
-                $size -= 2.5;
+            if ($c < 40) {
                 if ($c === 1) {
-                    $size -= 3.5;
+                    $size -= 2.5;
+                } else {
+                    $size -= 1.3;
                 }
                 $c++;
             } else {
@@ -217,5 +248,10 @@ class NLPService
     public function getWords()
     {
         return $this->words;
+    }
+
+    public function getTopic()
+    {
+        return $this->topic;
     }
 }
