@@ -5,11 +5,15 @@ namespace App\Http\Controllers\Management;
 use App\Http\Controllers\ApiController;
 use App\Http\Resources\Users\User;
 use App\Http\Resources\Users\Users;
+use App\Repositories\AnswersRepository;
+use App\Repositories\IncidentReportRepository;
+use App\Repositories\ProcessedDataRepository;
 use App\Repositories\RolesRepository;
 use App\Repositories\UserRepository;
 use App\Utils\Enumerators\UserStatusEnumerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class UserController extends ApiController
@@ -18,11 +22,25 @@ class UserController extends ApiController
 
     protected $rolesRepository;
 
-    public function __construct(UserRepository $userRepository, RolesRepository $rolesRepository)
-    {
+    protected $answersRepository;
+
+    protected $incidentReportRepository;
+
+    protected $processedDataRepository;
+
+    public function __construct(
+        UserRepository $userRepository,
+        RolesRepository $rolesRepository,
+        AnswersRepository $answersRepository,
+        IncidentReportRepository $incidentReportRepository,
+        ProcessedDataRepository $processedDataRepository
+    ) {
         parent::__construct();
         $this->userRepository = $userRepository;
         $this->rolesRepository = $rolesRepository;
+        $this->answersRepository = $answersRepository;
+        $this->incidentReportRepository = $incidentReportRepository;
+        $this->processedDataRepository = $processedDataRepository;
     }
 
     public function getUsers(Request $request)
@@ -97,6 +115,20 @@ class UserController extends ApiController
             $roles = $this->rolesRepository->all();
 
             $this->response->setData(['data' => $roles]);
+        });
+    }
+
+    public function dashboard()
+    {
+        return $this->runWithExceptionHandling(function () {
+            $data = [
+                'total_users' => $this->userRepository->all()->count(),
+                'total_respondents' => $this->answersRepository->totalRespondents(),
+                'incident_reports' => $this->incidentReportRepository->all()->count(),
+                'processed_data' => $this->processedDataRepository->all()->count()
+            ];
+
+            $this->response->setData(['data' => $data]);
         });
     }
 }

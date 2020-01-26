@@ -24,8 +24,7 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
             $router->get('/', 'QuestionnaireController@getDefaultSet');
         });
         $router->group(['prefix' => 'answer'], function () use ($router) {
-            $router->get('/summary/{device?}/{order?}', 'SummaryController@summary');
-            $router->post('/summary/{device?}/{order?}', 'SummaryController@summary');
+            $router->get('/summary/{device?}/{order?}', 'SummaryController@summarize');
             $router->get('/{order}', 'AnswerController@getAnswer');
             $router->post('/{order?}', 'AnswerController@answer');
         });
@@ -42,9 +41,18 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         $router->get('/logout', 'Authentication\AuthenticationController@logout');
         $router->group(['middleware' => ['admin']], function () use ($router) {
             $router->group(['prefix' => 'management'], function () use ($router) {
+                $router->get('/dashboard', 'Management\UserController@dashboard');
                 $router->post('/summary/reports', 'SummaryController@reportSummary');
+                $router->group(['prefix' => 'published'], function () use ($router) {
+                    $router->get('/', 'Management\QuestionController@getPublishedData');
+                    $router->patch('/{id}', 'Management\QuestionController@patchPublishedData');
+                    $router->delete('/{id}', 'Management\QuestionController@deletePublishedData');
+                });
                 $router->group(['prefix' => 'answers'], function () use ($router) {
                     $router->get('/', 'Management\AnswerController@getAnswerList');
+                    $router->post('/summary/{device?}/{order?}', 'SummaryController@summary');
+                    $router->post('/publish-data', 'SummaryController@publish');
+                    $router->post('/clean-data', 'SummaryController@cleanData');
                     $router->get('/{device_address}/{set_id}', 'Management\AnswerController@getAnswer');
                 });
                 $router->group(['prefix' => 'locations'], function () use ($router) {

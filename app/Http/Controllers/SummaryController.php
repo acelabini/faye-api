@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\LocationBarangays;
 use App\Models\QuestionSets;
 use App\Repositories\AnswersRepository;
+use App\Repositories\ProcessedDataRepository;
 use App\Repositories\QuestionnaireSetsRepository;
 use App\Repositories\QuestionSetsRepository;
 use App\Services\Answer\AnswerService;
@@ -15,7 +16,9 @@ use App\Services\Questions\QuestionService;
 use App\Sets\QuestionSetService;
 use App\Utils\Enumerators\SummaryTypeEnumerator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class SummaryController extends ApiController
 {
@@ -26,6 +29,7 @@ class SummaryController extends ApiController
     protected $questionnaireSetsRepository;
     protected $questionSetService;
     protected $questionSetsRepository;
+    protected $processedDataRepository;
 
     public function __construct(
         QuestionService $questionService,
@@ -35,7 +39,8 @@ class SummaryController extends ApiController
         QuestionnaireSetsRepository $questionnaireSetsRepository,
         QuestionSetService $questionSetService,
         QuestionSetsRepository $questionSetsRepository,
-        LDAService $LDAService
+        LDAService $LDAService,
+        ProcessedDataRepository $processedDataRepository
     )
     {
         parent::__construct();
@@ -47,6 +52,7 @@ class SummaryController extends ApiController
         $this->questionSetService = $questionSetService;
         $this->questionSetsRepository = $questionSetsRepository;
         $this->LDAService = $LDAService;
+        $this->processedDataRepository = $processedDataRepository;
     }
 
     public function summaryWithCategory(Request $request, QuestionSets $set, array $categories)
@@ -91,40 +97,58 @@ class SummaryController extends ApiController
         });
     }
 
-    public function summary(Request $request, $device = null, $order = null)
+    public function cleanData(Request $request)
     {
-        return $this->runWithExceptionHandling(function () use ($request, $order, $device) {
-            $data = [];
+        return $this->runWithExceptionHandling(function () use ($request) {
             $options = $request->get("options") ? json_decode($request->get("options"), true) : [];
             $settings = $request->get("settings") ? json_decode($request->get("settings"), true) : [];
             $optionData = [
-                'options'       =>  [
+                'options' => [
                     'remove_symbols' => $options["remove_symbols"] ?? null,
                     'remove_numbers' => $options["remove_numbers"] ?? null,
                     'remove_duplicates' => $options["remove_duplicates"] ?? [],
                 ],
-                'iterations'    =>  !empty($settings['number_iterations']) ? $settings['number_iterations'] : 50,
-                'limit_words'    =>  !empty($settings['number_words']) ? $settings['number_words'] : 5,
-                'number_of_topics'    =>  !empty($settings['number_topics']) ? $settings['number_topics'] : 5,
-                'stop_words'    =>  $request->get("stop_words") ?? null
+                'iterations' => !empty($settings['number_iterations']) ? $settings['number_iterations'] : 50,
+                'limit_words' => !empty($settings['number_words']) ? $settings['number_words'] : 5,
+                'number_of_topics' => !empty($settings['number_topics']) ? $settings['number_topics'] : 5,
+                'stop_words' => $request->get("stop_words") ?? null
             ];
             if ($request->get("data_category") === 'Incident Report') {
-                $category = true;
-                $analysis = (new NLPService($optionData))->getReports()->clean()->LDA();
+                $clean = (new NLPService())->getReports()->clean();
+                $topic = $clean->getTopic();
             } else {
-                $category = $request->get("category");
+                $category = $request->get("category") ? json_decode($request->get("category"), true) : [];
                 $set = $this->questionSetService->getSet();
-                $answers = $this->answersRepository->getSetAnswers($set->id, $order);
-                $analysis = (new NLPService(array_merge($optionData, [
-                    'question_set' => $set
-                ])))->getAnswers($category)->clean()->LDA();
+                $topic = null;
+                foreach ($category as $item) {
+                    $clean = (new NLPService(array_merge($optionData, [
+                        'question_set' => $set
+                    ])))->getAnswers($item)->clean()->topWords();
+                    $topic .= $clean->toString() . " ";
+                }
             }
-            $thematicAnalysis = $analysis->getWords();
-            $cloud =
-                $analysis->topWords($category)
-                ->generateCloud()->getWords()
-            ;
+            $modelName = $request->get("data_category");
+            if ($request->has("category") && !empty($request->get("category")) ||
+                $request->has("data_category") && !empty($request->get("data_category"))
+            ) {
+                $category = $request->has("category") ? $request->get("category") : $request->get("data_category");
+                $category = preg_replace("/[^a-zA-Z0-9]/i", "", strtolower($category));
+                $modelName = $modelName . "-" . str_replace('"', "", $category);
+            }
 
+            $this->response->setData(['data' => [
+                'topic' => preg_replace('/\s+/', ' ', $topic),
+                'name' => "{$modelName}.txt"
+            ]]);
+        });
+    }
+
+    public function summarize(Request $request, $device = null, $order = null)
+    {
+        return $this->runWithExceptionHandling(function () use ($request, $order, $device) {
+            $set = $this->questionSetService->getSet();
+            $answers = $this->answersRepository->getSetAnswers($set->id, $order);
+            $data = [];
             if (isset($answers)) {
                 foreach ($answers as $answer) {
                     switch ($answer->summary) {
@@ -162,11 +186,90 @@ class SummaryController extends ApiController
                     ];
                 }
             }
-
-            $data['cloud'] = $cloud;
-            $data['thematics_analysis'] = $thematicAnalysis;
+            $published = $this->processedDataRepository->getPublished();
+            $clouds = [];
+            foreach ($published as $item) {
+                $val = $item->data;
+                $clouds[] = [
+                    'title' => $val['title'],
+                    'cloud' => $val['cloud'],
+                ];
+            }
+            $data['cloud'] = $clouds;
 
             $this->response->setData(['data' => $data]);
+        });
+    }
+
+    public function summary(Request $request, $device = null, $order = null)
+    {
+        return $this->runWithExceptionHandling(function () use ($request, $order, $device) {
+            $data = [];
+            $options = $request->get("options") ? json_decode($request->get("options"), true) : [];
+            $settings = $request->get("settings") ? json_decode($request->get("settings"), true) : [];
+            $optionData = [
+                'options'       =>  [
+                    'remove_symbols' => $options["remove_symbols"] ?? null,
+                    'remove_numbers' => $options["remove_numbers"] ?? null,
+                    'remove_duplicates' => $options["remove_duplicates"] ?? [],
+                ],
+                'iterations'    =>  !empty($settings['number_iterations']) ? $settings['number_iterations'] : 50,
+                'limit_words'    =>  !empty($settings['number_words']) ? $settings['number_words'] : 5,
+                'number_of_topics'    =>  !empty($settings['number_topics']) ? $settings['number_topics'] : 5,
+                'stop_words'    =>  $request->get("stop_words") ?? null
+            ];
+            if ($request->has("upload_processed_data_file_path") &&
+                $request->get("data_category") === "upload_processed_data") {
+                $category = null;
+                $topic = file_get_contents($request->get("upload_processed_data_file_path"));
+                $clean = (new NLPService($optionData))->setTopic($topic)->clean();
+            } else if ($request->get("data_category") === 'Incident Report') {
+                $category = true;
+                $clean = (new NLPService($optionData))->getReports()->clean();
+                $topic = $clean->getTopic();
+            } else {
+                $category = $request->get("category");
+                $set = $this->questionSetService->getSet();
+                $clean = (new NLPService(array_merge($optionData, [
+                    'question_set' => $set
+                ])))->getAnswers($category)->clean();
+                $topic = $clean->getTopic();
+            }
+            $analysis = $clean->LDA();
+            $thematicAnalysis = $analysis->getWords();
+            $cloud = $clean->topWords($category, $topic)->generateCloud()->getWords();
+
+            $modelName = $settings['model_name'] ?? null;
+            if ($request->has("category") && !empty($request->get("category")) ||
+                $request->has("data_category") && !empty($request->get("data_category"))
+            ) {
+                $category = $request->has("category") ? $request->get("category") : $request->get("data_category");
+                $category = preg_replace("/[^a-zA-Z0-9]/i", "", strtolower($category));
+                $modelName = $modelName . "-" . str_replace('"', "", $category);
+            }
+            $data['title'] = $request->get("title");
+            $data['cloud'] = $cloud;
+            $data['thematics_analysis'] = $thematicAnalysis;
+            $data['model_name'] = $modelName;
+            $data['original_model_name'] = $settings['model_name'] ?? null;
+
+            $processed = $this->processedDataRepository->create([
+                'data' => $data,
+                'processed_by' => Auth::user()->id
+            ]);
+
+            $data['processed_id'] = $processed->id;
+            $this->response->setData(['data' => $data]);
+        });
+    }
+
+    public function publish(Request $request)
+    {
+        return $this->runWithExceptionHandling(function () use ($request) {
+            $processed_ids = $request->get("processed_ids") ? json_decode($request->get("processed_ids"), true) : [];
+            $this->processedDataRepository->publishByIds($processed_ids);
+
+            $this->response->setData(['data' => true]);
         });
     }
 
@@ -182,11 +285,6 @@ class SummaryController extends ApiController
         }
 
         return '#' . str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT);
-    }
-
-    public function wordCloud()
-    {
-
     }
 
     public function getLDA(Request $request, $setId = null)

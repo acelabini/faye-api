@@ -12,6 +12,16 @@ class AnswersRepository extends Repository
         $this->model = new Answers();
     }
 
+    public function totalRespondents()
+    {
+        return $this->model
+            ->select('device_address')
+            ->groupBy('device_address')
+            ->get()
+            ->count()
+            ;
+    }
+
     public function getUserAnswersBySet($deviceAddress, $setId)
     {
         return $this->model
