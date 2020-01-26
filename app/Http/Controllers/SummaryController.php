@@ -236,7 +236,7 @@ class SummaryController extends ApiController
                 $topic = $clean->getTopic();
             }
             $analysis = $clean->LDA();
-            $thematicAnalysis = $analysis->getWords();
+            $thematicAnalysis = $analysis->getThematic();
             $cloud = $clean->topWords($category, $topic)->generateCloud()->getWords();
 
             $modelName = $settings['model_name'] ?? null;
