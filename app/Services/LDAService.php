@@ -6,14 +6,43 @@ use App\Repositories\AnswersRepository;
 use App\Repositories\IncidentReportRepository;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
+use Illuminate\Support\Facades\Log;
 
 class LDAService
 {
     public $answersRepository;
+    public $nlpService;
 
-    public function __construct(AnswersRepository $answersRepository)
-    {
+    public function __construct(
+        AnswersRepository $answersRepository,
+        NLPService $nlpService
+    ) {
         $this->answersRepository = $answersRepository;
+        $this->nlpService = $nlpService;
+    }
+
+    public function processLDA(array $postAnswers, array $options)
+    {
+        $data = [
+            'model_name'    =>  $options['model_name'] ?? null,
+            'path'          =>  'jenLDA',
+            'num_topics'    =>  $options['number_of_topics'] ?? 10,
+            'stop_words'    =>  $options['stop_words'] ?? null,
+            'iterations'    =>  $options['iterations'] ?? 50,
+            'limit_words'   =>  $options['limit_words'] ?? 5,
+            'answers'       =>  $postAnswers,
+        ];
+
+        $url = 'http://159.89.193.192/lda/createLDA.php';
+        $client = new Client();
+
+        $response = $client->post($url, [
+            'form_params'   =>  [
+                'data'  =>  $data
+            ]
+        ]);
+
+        return $response->getBody()->getContents();
     }
 
     public function getLDA(array $data, $setId = null, $category = null)
@@ -32,14 +61,7 @@ class LDAService
                 $postAnswers[] = $answer['answer'];
             }
         } else {
-            $reportRepo = app()->make(IncidentReportRepository::class);
-            $reports = $reportRepo->search([
-                ['status', 'confirmed']
-            ]);
-
-            foreach ($reports as $report) {
-                $postAnswers[] = $report->message;
-            }
+            $postAnswers = $this->nlpService->getReports()->getAllTopic();
         }
 
         $data = [

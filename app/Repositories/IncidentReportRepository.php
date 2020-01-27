@@ -18,4 +18,13 @@ class IncidentReportRepository extends Repository
             ->get()
             ;
     }
+
+    public function getUniqueReports()
+    {
+        return $this->model
+            ->where('status', 'confirmed')
+            ->groupBy('message')
+            ->get()
+            ;
+    }
 }
