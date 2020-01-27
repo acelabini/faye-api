@@ -30,6 +30,7 @@ class SummaryController extends ApiController
     protected $questionSetService;
     protected $questionSetsRepository;
     protected $processedDataRepository;
+    protected $LDAService;
 
     public function __construct(
         QuestionService $questionService,
@@ -222,10 +223,13 @@ class SummaryController extends ApiController
                 $request->get("data_category") === "upload_processed_data") {
                 $category = null;
                 $topic = file_get_contents($request->get("upload_processed_data_file_path"));
+                $ldaTopic = explode("<br/>", wordwrap($topic, 50, "<br/>"));
                 $clean = (new NLPService($optionData))->setTopic($topic)->clean();
+                $topic = $clean->getTopic();
             } else if ($request->get("data_category") === 'Incident Report') {
                 $category = true;
                 $clean = (new NLPService($optionData))->getReports()->clean();
+                $ldaTopic = $clean->getAllTopic();
                 $topic = $clean->getTopic();
             } else {
                 $category = $request->get("category");
@@ -233,6 +237,7 @@ class SummaryController extends ApiController
                 $clean = (new NLPService(array_merge($optionData, [
                     'question_set' => $set
                 ])))->getAnswers($category)->clean();
+                $ldaTopic = $clean->getAllTopic();
                 $topic = $clean->getTopic();
             }
             $analysis = $clean->LDA();
@@ -259,6 +264,10 @@ class SummaryController extends ApiController
             ]);
 
             $data['processed_id'] = $processed->id;
+
+            $optionData['model_name'] = $modelName;
+            $this->LDAService->processLDA($ldaTopic, $optionData);
+
             $this->response->setData(['data' => $data]);
         });
     }

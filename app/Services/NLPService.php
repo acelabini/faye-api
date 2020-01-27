@@ -23,6 +23,8 @@ class NLPService
 
     protected $topic;
 
+    protected $allTopic = [];
+
     protected $iterations;
 
     protected $limitWords;
@@ -82,6 +84,7 @@ class NLPService
         $stopWords = array_merge($this->stopWords, config('stop_words'));
         $stop = new StopWords($stopWords);
         $d = new TokensDocument(explode(" ", $topic ?: $this->topic));
+        Log::info(explode(" ", $topic ?: $this->topic));
         $d->applyTransformation($stop);
 
         $tset->addDocument(
@@ -134,13 +137,13 @@ class NLPService
     public function getReports()
     {
         $reportRepo = app()->make(IncidentReportRepository::class);
-        $reports = $reportRepo->search([
-            ['status', 'confirmed']
-        ]);
+        $reports = $reportRepo->getUniqueReports();
 
         $concat = "";
         foreach ($reports as $report) {
-            $concat .= " ".$report->message;
+            $message = preg_replace('/[\s,.]+/', ' ', $report->message);
+            $this->allTopic[] = $message;
+            $concat .= " ".$message;
         }
 
         $this->topic = $concat;
@@ -150,7 +153,7 @@ class NLPService
 
     public function setTopic($topic)
     {
-        $this->topic = preg_replace('/\s+/', ' ', $topic);;
+        $this->topic = preg_replace('/[\s,.]+/', ' ', $topic);
 
         return $this;
     }
@@ -163,7 +166,10 @@ class NLPService
 
         $answersRepo = app()->make(AnswersRepository::class);
         $answers = $answersRepo->getCloudAnswers($this->questionSet->id)->toArray();
-
+        if ($this->options['remove_duplicates']) {
+            $temp = array_unique(array_column($answers, 'answer'));
+            $answers = array_intersect_key($answers, $temp);
+        }
         $concat = "";
         foreach ($answers as $answer) {
             if ($category) {
@@ -173,7 +179,8 @@ class NLPService
                     continue;
                 }
             }
-            $ans = preg_replace('/\s+/', ' ', $answer['answer']);
+            $ans = preg_replace('/[\s,.]+/', ' ', $answer['answer']);
+            $this->allTopic[] = $ans;
             $concat .= $ans. " ";
         }
 
@@ -197,11 +204,7 @@ class NLPService
             $words = array_merge(...$words);
             $words = array_map("str_singular", array_keys($words));
         }
-
         $this->cloudWords = array_count_values($words);
-        if ($this->options['remove_duplicates']) {
-            $words = array_unique($words);
-        }
 //        $this->cloudWords = $this->numberOfTopics ? array_slice($words, 0, $this->numberOfTopics) : $words;
         $this->topic = $words;
 
@@ -237,6 +240,7 @@ class NLPService
         if (!is_array($this->cloudWords)) {
             return $this;
         }
+
         arsort($this->cloudWords);
         $data = [];
         $size = 40;
@@ -271,5 +275,19 @@ class NLPService
     public function getTopic()
     {
         return $this->topic;
+    }
+
+    public function getAllTopic()
+    {
+        return array_filter($this->allTopic, function ($item) {
+            if (isset($this->options['remove_symbols'])) {
+                $item = preg_replace("/[^a-zA-Z0-9 ]/i", "", strtolower($item));
+            }
+            if (isset($this->options['remove_numbers'])) {
+                $item = preg_replace("/[^a-zA-Z ]/i", "", strtolower($item));
+            }
+
+            return $item;
+        });
     }
 }
