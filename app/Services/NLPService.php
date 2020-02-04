@@ -84,7 +84,6 @@ class NLPService
         $stopWords = array_merge($this->stopWords, config('stop_words'));
         $stop = new StopWords($stopWords);
         $d = new TokensDocument(explode(" ", $topic ?: $this->topic));
-        Log::info(explode(" ", $topic ?: $this->topic));
         $d->applyTransformation($stop);
 
         $tset->addDocument(
@@ -105,7 +104,8 @@ class NLPService
 
         $lda->train($tset, $this->iterations);
 
-        $this->words = $lda->getPhi(); //$this->limitWords
+        $withLimit = $lda->getPhi($this->limitWords);
+        $this->words = $lda->getPhi();
         $words = $this->words[0] ?? $this->words;
         $size = count($words) / $this->numberOfTopics;
         $words = array_chunk($words, $size,true); // true to preserve the keys
@@ -120,7 +120,7 @@ class NLPService
             }
             $params[] = [
                 'params' => $sum,
-                'words' => array_keys($word)
+                'words' => array_keys($withLimit[$key]) ?? null
             ];
         }
 
