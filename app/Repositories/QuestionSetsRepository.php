@@ -11,4 +11,12 @@ class QuestionSetsRepository extends Repository
     {
         $this->model = new QuestionSets();
     }
+
+    public function getActiveSets()
+    {
+        return $this->model
+            ->with('questionnaires')
+            ->where('status', '!=', QuestionSetStatusEnumerator::INACTIVE)
+            ->get();
+    }
 }

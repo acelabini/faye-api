@@ -18,13 +18,17 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         $router->get('/cloud', 'SummaryController@wordCloud');
         $router->post('/performLDA/{setId?}', 'SummaryController@getLDA');
         $router->group(['prefix' => 'question'], function () use ($router) {
-            $router->get('/{order}', 'QuestionnaireController@getQuestionnaire');
+            $router->get('/{order}/{setId?}', 'QuestionnaireController@getQuestionnaire');
         });
         $router->group(['prefix' => 'set'], function () use ($router) {
             $router->get('/', 'QuestionnaireController@getDefaultSet');
+            $router->get('/{setId}', 'QuestionnaireController@getSet');
+        });
+        $router->group(['prefix' => 'sets'], function () use ($router) {
+            $router->get('/', 'QuestionnaireController@getSets');
         });
         $router->group(['prefix' => 'answer'], function () use ($router) {
-            $router->get('/summary/{device?}/{order?}', 'SummaryController@summarize');
+            $router->get('/summary/{device?}/{order?}/{setId?}', 'SummaryController@summarize');
             $router->get('/{order}', 'AnswerController@getAnswer');
             $router->post('/{order?}', 'AnswerController@answer');
         });
@@ -34,6 +38,7 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         });
         $router->group(['prefix' => 'incident-report'], function () use ($router) {
             $router->post('/', 'Management\HazardController@reportIncident');
+            $router->get('/barangays', 'Management\LocationController@barangays');
         });
     });
     $router->group(['middleware' => ['auth.jwt']], function () use ($router) {
@@ -52,7 +57,7 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
                     $router->get('/', 'Management\AnswerController@getAnswerList');
                     $router->post('/summary/{device?}/{order?}', 'SummaryController@summary');
                     $router->post('/publish-data', 'SummaryController@publish');
-                    $router->post('/clean-data', 'SummaryController@cleanData');
+                    $router->post('/clean-data/{raw?}', 'SummaryController@cleanData');
                     $router->get('/{device_address}/{set_id}', 'Management\AnswerController@getAnswer');
                 });
                 $router->group(['prefix' => 'locations'], function () use ($router) {
@@ -95,7 +100,9 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
                     $router->patch('/{userId}', 'Management\UserController@editUser');
                 });
                 $router->group(['prefix' => 'incident-report'], function () use ($router) {
+                    $router->patch('/{id}', 'Management\HazardController@updateIncidentStatus');
                     $router->get('/', 'Management\HazardController@getReportIncidents');
+                    $router->get('/raw', 'SummaryController@rawIncident');
                 });
             });
         });

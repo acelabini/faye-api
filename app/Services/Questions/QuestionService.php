@@ -133,9 +133,9 @@ class QuestionService
     // if same, get the next question
     // else get the new set of questions
     // if null meaning the set of question is done
-    public function getCurrentQuestion(LocationBarangays $locationBarangay = null, int $order = null)
+    public function getCurrentQuestion(LocationBarangays $locationBarangay = null, int $order = null, $setId = null)
     {
-        $set = $this->questionSetService->getSet($locationBarangay);
+        $set = $this->questionSetService->getSet($locationBarangay, $setId);
         $identifier = AnswerService::getAnswerIdentifier(request()->get('device'));
         $lastAnswered = $this->answersRepository->search([
             ['user_id', $identifier['user_id']],

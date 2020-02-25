@@ -161,7 +161,7 @@ class AnswersRepository extends Repository
             ;
     }
 
-    public function getCloudAnswers($setId, $order = null)
+    public function getCloudAnswers($setId = null, $order = null)
     {
         return $this->model
             ->selectRaw('
@@ -181,7 +181,9 @@ class AnswersRepository extends Repository
             ->join('question_sets', 'question_sets.id', '=', 'questionnaire_sets.set_id')
             ->join('input_fields', 'input_fields.id', '=', 'answers.field_id')
             ->join('questions', 'questions.id', '=', 'questionnaire_sets.question_id')
-            ->where('question_sets.id', $setId)
+            ->when($setId, function ($q) use ($setId) {
+                $q->where('question_sets.id', $setId);
+            })
             ->where('input_fields.summary', SummaryTypeEnumerator::CLOUD)
             ->when($order, function ($q) use ($order) {
                 $q->where('questionnaire_sets.order', $order);

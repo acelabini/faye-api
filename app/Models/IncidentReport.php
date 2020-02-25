@@ -10,6 +10,8 @@ class IncidentReport extends Model
         'name',
         'message',
         'media',
-        'status'
+        'status',
+        'incident_datetime',
+        'barangay_id',
     ];
 }
