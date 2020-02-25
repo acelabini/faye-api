@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\LocationBarangays;
 use App\Models\QuestionSets;
 use App\Repositories\AnswersRepository;
+use App\Repositories\IncidentReportRepository;
 use App\Repositories\ProcessedDataRepository;
 use App\Repositories\QuestionnaireSetsRepository;
 use App\Repositories\QuestionSetsRepository;
@@ -98,9 +99,60 @@ class SummaryController extends ApiController
         });
     }
 
-    public function cleanData(Request $request)
+    public function raw($category)
     {
-        return $this->runWithExceptionHandling(function () use ($request) {
+        $concat = '';
+        $answers = $this->answersRepository->getCloudAnswers()->toArray();
+        foreach ($answers as $answer) {
+            if ($category) {
+                $category = str_replace('"', "", $category);
+                $categories = $this->answersRepository->getCategory($category, $answer['device_address']);
+                if ($categories->isEmpty()) {
+                    continue;
+                }
+            }
+            $ans = preg_replace('/[\s,.]+/', ' ', $answer['answer']);
+            $concat .= $ans. " ";
+        }
+
+        return $concat;
+    }
+
+    public function rawIncident()
+    {
+        return $this->runWithExceptionHandling(function () {
+            $reportRepo = app()->make(IncidentReportRepository::class);
+            $reports = $reportRepo->getUniqueReports();
+
+            $concat = "";
+            foreach ($reports as $report) {
+                $message = preg_replace('/[\s,.]+/', ' ', $report->message);
+                $concat .= " " . $message;
+            }
+
+            $this->response->setData(['data' => [
+                'topic' => preg_replace('/\s+/', ' ', $concat),
+                'name' => "incident_reports.txt"
+            ]]);
+        });
+    }
+
+    public function cleanData(Request $request, $raw = null)
+    {
+        return $this->runWithExceptionHandling(function () use ($request, $raw) {
+            if ($raw) {
+                if ($request->has("category") && !empty($request->get("category"))) {
+                    $category = $request->get("category");
+                    $category = preg_replace("/[^a-zA-Z0-9]/i", "", strtolower($category));
+                    $modelName = str_replace('"', "", $category);
+                    $topic = $this->raw($request->get("category"));
+                    $this->response->setData(['data' => [
+                        'topic' => preg_replace('/\s+/', ' ', $topic),
+                        'name' => "{$modelName}.txt"
+                    ]]);
+                }
+                return;
+            }
             $options = $request->get("options") ? json_decode($request->get("options"), true) : [];
             $settings = $request->get("settings") ? json_decode($request->get("settings"), true) : [];
             $optionData = [
@@ -144,9 +196,9 @@ class SummaryController extends ApiController
         });
     }
 
-    public function summarize(Request $request, $device = null, $order = null)
+    public function summarize(Request $request, $device = null, $order = null, $setId = null)
     {
-        return $this->runWithExceptionHandling(function () use ($request, $order, $device) {
+        return $this->runWithExceptionHandling(function () use ($request, $order, $setId, $device) {
             $set = $this->questionSetService->getSet();
             $answers = $this->answersRepository->getSetAnswers($set->id, $order);
             $data = [];

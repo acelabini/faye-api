@@ -48,11 +48,15 @@ class QuestionnaireController extends ApiController
      * @param $order
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getQuestionnaire($order)
+    public function getQuestionnaire($order, $setId = null)
     {
-        return $this->runWithExceptionHandling(function () use ($order) {
+        return $this->runWithExceptionHandling(function () use ($order, $setId) {
             $order = intval($order);
-            list($currentQuestion, $currentSet) = $this->questionService->getCurrentQuestion(null, $order);
+            list($currentQuestion, $currentSet) = $this->questionService->getCurrentQuestion(
+                null,
+                $order,
+                $setId
+            );
             if (!$currentQuestion) {
                 throw new ApiException(
                     "You've finished all the questions. Thank you for your time",
@@ -71,6 +75,24 @@ class QuestionnaireController extends ApiController
     {
         return $this->runWithExceptionHandling(function () {
             $set = $this->questionSetService->getSet();
+
+            $this->response->setData(['data' => ['set' => $set, 'questions_count' => $set->questionnaires->count()]]);
+        });
+    }
+
+    public function getSets()
+    {
+        return $this->runWithExceptionHandling(function () {
+            $sets = $this->questionSetsRepository->getActiveSets();
+
+            $this->response->setData(['data' => ['sets' => $sets]]);
+        });
+    }
+
+    public function getSet($id)
+    {
+        return $this->runWithExceptionHandling(function () use ($id) {
+            $set = $this->questionSetsRepository->get($id);
 
             $this->response->setData(['data' => ['set' => $set, 'questions_count' => $set->questionnaires->count()]]);
         });

@@ -78,18 +78,21 @@ class QuestionSetService
     public function patch(QuestionSets $set, array $data, LocationBarangays $locationBarangays = null)
     {
         $isDefault = filter_var($data['default'], FILTER_VALIDATE_BOOLEAN);
-        if ($isDefault) {
-            $default = $this->questionSetsRepository->search([
-                ['location_id', optional($locationBarangays)->id],
-                ['status', QuestionSetStatusEnumerator::DEFAULT]
-            ]);
-
-            if ($default->isNotEmpty()) {
-                $this->questionSetsRepository->update($default->first(), [
-                    'status'        =>  QuestionSetStatusEnumerator::ACTIVE
-                ]) ;
-            }
-        }
+//        if ($isDefault) {
+//            $this->questionSetsRepository->update($set, [
+//                'status'        =>  QuestionSetStatusEnumerator::ACTIVE
+//            ]);
+//            $default = $this->questionSetsRepository->search([
+//                ['location_id', optional($locationBarangays)->id],
+//                ['status', QuestionSetStatusEnumerator::DEFAULT]
+//            ]);
+//
+//            if ($default->isNotEmpty()) {
+//                $this->questionSetsRepository->update($default->first(), [
+//                    'status'        =>  QuestionSetStatusEnumerator::ACTIVE
+//                ]) ;
+//            }
+//        }
 
         $set = $this->questionSetsRepository->update($set, [
             'title'         =>  $data['title'],
@@ -104,6 +107,9 @@ class QuestionSetService
 
         if (count($question_ids = $data['question_ids'])) {
             $question_ids = array_values($question_ids);
+            $setQuestions = $this->questionnaireSetsRepository->search([['set_id', $set->id]]);
+            $setQuestionsId = $setQuestions->pluck('question_id')->toArray();
+            $difference = array_diff($setQuestionsId, $question_ids);
             foreach ($question_ids as $order => $question_id) {
                 $question = $this->questionsRepository->getById($question_id);
                 if ($question) {
@@ -124,6 +130,7 @@ class QuestionSetService
                     }
                 }
             }
+            $this->questionnaireSetsRepository->deleteQuestionnaire($set, $difference);
         }
 
         return $set;
@@ -137,13 +144,15 @@ class QuestionSetService
         ]);
     }
 
-    public function getSet(LocationBarangays $locationBarangay = null)
+    public function getSet(LocationBarangays $locationBarangay = null, $setId = null)
     {
         if ($locationBarangay && !env('SKIP_QUESTIONS')) {
             $set = $this->questionSetsRepository->find([
                 ['location_id', $locationBarangay->id],
                 ['status', QuestionSetStatusEnumerator::DEFAULT]
             ]);
+        } else if ($setId) {
+            $set = $this->questionSetsRepository->get($setId);
         } else {
             $set = $this->getDefault();
         }

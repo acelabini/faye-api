@@ -139,4 +139,13 @@ class LocationController extends ApiController
             $this->response->setData(['data' => $hazard]);
         });
     }
+
+    public function barangays(Request $request)
+    {
+        return $this->runWithExceptionHandling(function () use ($request) {
+            $locations = LocationBarangays::select('id', 'name')->orderBy('name', 'asc')->get();
+
+            $this->response->setData(['data' => $locations]);
+        });
+    }
 }
