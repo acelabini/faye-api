@@ -75,12 +75,20 @@ class UserController extends ApiController
                 'role_id'   =>  'required|exists:roles,id'
             ]);
 
-            $user = $this->userRepository->update($user, [
+            $data = [
                 'name'      =>  $request->get('name'),
                 'email'     =>  $request->get('email'),
                 'role_id'   =>  $request->get('role_id'),
                 'status'    =>  $request->get('status')
-            ]);
+            ];
+            if ($request->has('password') && $request->get('password') &&
+                strlen($request->get('password')) > 4
+            ) {
+                $data = array_merge($data, [
+                    'password' => Hash::make($request->get("password")),
+                ]);
+            }
+            $user = $this->userRepository->update($user, $data);
             $this->response->setData(['data' => new User($user)]);
         });
     }
