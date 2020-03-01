@@ -78,7 +78,7 @@ class NLPService
         if (!$this->topic) {
             return $this;
         }
-
+try {
         $tok = new WhitespaceTokenizer();
         $tset = new TrainingSet();
         $stopWords = array_merge($this->stopWords, config('stop_words'));
@@ -120,13 +120,16 @@ class NLPService
             }
             $params[] = [
                 'params' => $sum,
-                'words' => array_keys($withLimit[$key]) ?? null
+                'words' => array_keys($withLimit[$key] ?? [])
             ];
         }
 
         $this->thematic = $params;
 
         return $this;
+} catch (\Exception $e) {
+Log::info($e->getMessage());
+}
     }
 
     public function getThematic()
