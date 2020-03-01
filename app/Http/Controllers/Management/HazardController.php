@@ -8,6 +8,7 @@ use App\Http\Resources\Hazards\LocationHazard;
 use App\Repositories\HazardsRepository;
 use App\Repositories\IncidentReportRepository;
 use App\Repositories\LocationHazardsRepository;
+use App\Repositories\UserRepository;
 use App\Utils\Enumerators\HazardEnumerator;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -116,6 +117,13 @@ class HazardController extends ApiController
     public function reportIncident(Request $request)
     {
         return $this->runWithExceptionHandling(function () use ($request) {
+            if ($request->get('user_id')) {
+                $user = app()->make(UserRepository::class)->get($request->get('user_id'));
+                $request->request->add([
+                    'user_id' => $user->id,
+                    'report_name' => $user->name
+                ]);
+            }
             $this->validate($request, [
                 'report_name'      =>  'required|string',
                 'report_message'   =>  'required',
@@ -132,7 +140,8 @@ class HazardController extends ApiController
                 'message'   =>  $request->get('report_message'),
                 'media'     =>  $fileName,
                 'barangay_id' => $request->get('barangay_id'),
-                'incident_datetime' => Carbon::parse($request->get("report_datetime"))
+                'incident_datetime' => Carbon::parse($request->get("report_datetime")),
+                'user_id'   =>  $request->get('user_id')
             ]);
 
             $this->response->setData(['data' => $report]);

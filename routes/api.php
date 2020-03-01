@@ -40,13 +40,16 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
             $router->post('/', 'Management\HazardController@reportIncident');
             $router->get('/barangays', 'Management\LocationController@barangays');
         });
+        $router->get('/dashboard', 'Management\UserController@dashboard');
     });
     $router->group(['middleware' => ['auth.jwt']], function () use ($router) {
         $router->get('/user', 'Authentication\AuthenticationController@getAuthUser');
         $router->get('/logout', 'Authentication\AuthenticationController@logout');
+        $router->group(['prefix' => 'profile'], function () use ($router) {
+            $router->get('/', 'HomeController@profile');
+        });
         $router->group(['middleware' => ['admin']], function () use ($router) {
             $router->group(['prefix' => 'management'], function () use ($router) {
-                $router->get('/dashboard', 'Management\UserController@dashboard');
                 $router->post('/summary/reports', 'SummaryController@reportSummary');
                 $router->group(['prefix' => 'published'], function () use ($router) {
                     $router->get('/', 'Management\QuestionController@getPublishedData');

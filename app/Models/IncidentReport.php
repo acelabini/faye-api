@@ -13,5 +13,16 @@ class IncidentReport extends Model
         'status',
         'incident_datetime',
         'barangay_id',
+        'user_id'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function barangay()
+    {
+        return $this->belongsTo(LocationBarangays::class, 'barangay_id');
+    }
 }
