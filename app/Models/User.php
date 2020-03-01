@@ -66,4 +66,9 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->belongsTo(Roles::class, 'role_id');
     }
+
+    public function incidentReports()
+    {
+        return $this->hasMany(IncidentReport::class, 'user_id')->orderBy('created_at', 'desc');
+    }
 }

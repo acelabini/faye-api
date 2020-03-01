@@ -81,6 +81,7 @@ class NLPService
 
         $tok = new WhitespaceTokenizer();
         $tset = new TrainingSet();
+        // Merge stop words from input and default stop words
         $stopWords = array_merge($this->stopWords, config('stop_words'));
         $stop = new StopWords($stopWords);
         $d = new TokensDocument(explode(" ", $topic ?: $this->topic));
@@ -102,6 +103,7 @@ class NLPService
             1  // the dirichlet prior assumed for the per word topic distribution
         );
 
+        // train with number of iterations
         $lda->train($tset, $this->iterations);
 
         $withLimit = $lda->getPhi($this->limitWords);
