@@ -60,10 +60,10 @@ class AnswerController extends ApiController
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function answer(Request $request, $order)
+    public function answer(Request $request, $order, $setId = null)
     {
-        return $this->runWithExceptionHandling(function () use ($request, $order) {
-            list($currentQuestion, $currentSet) = $this->questionService->getCurrentQuestion(null, $order);
+        return $this->runWithExceptionHandling(function () use ($request, $order, $setId) {
+            list($currentQuestion, $currentSet) = $this->questionService->getCurrentQuestion(null, $order, $setId);
             if ($currentQuestion) {
                 $this->validate($request, $this->inputFieldService->validateInputFields($currentQuestion->inputs));
                 $fields = $currentQuestion->inputs->pluck('name')->toArray();

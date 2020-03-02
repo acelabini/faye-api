@@ -30,7 +30,7 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         $router->group(['prefix' => 'answer'], function () use ($router) {
             $router->get('/summary/{device?}/{order?}/{setId?}', 'SummaryController@summarize');
             $router->get('/{order}', 'AnswerController@getAnswer');
-            $router->post('/{order?}', 'AnswerController@answer');
+            $router->post('/{order?}/{setId?}', 'AnswerController@answer');
         });
         $router->group(['middleware' => ['guest']], function () use ($router) {
             $router->post('/register', 'Authentication\RegisterController@createQuestion');
