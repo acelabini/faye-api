@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6224174cd38094cab51f073028353910",
+    "content-hash": "688d228750cdefc0a0fc750a9e0a5ec9",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -1636,16 +1636,16 @@
         },
         {
             "name": "nlp-tools/nlp-tools",
-            "version": "dev-master",
+            "version": "dev-develop",
             "source": {
                 "type": "git",
                 "url": "https://github.com/angeloskath/php-nlp-tools.git",
-                "reference": "476e07c27fc032e4ca03ee599e7cd1ad0901af33"
+                "reference": "56f6d4551d0fb1cad98ce6f533362283bbdd3bf6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/angeloskath/php-nlp-tools/zipball/476e07c27fc032e4ca03ee599e7cd1ad0901af33",
-                "reference": "476e07c27fc032e4ca03ee599e7cd1ad0901af33",
+                "url": "https://api.github.com/repos/angeloskath/php-nlp-tools/zipball/56f6d4551d0fb1cad98ce6f533362283bbdd3bf6",
+                "reference": "56f6d4551d0fb1cad98ce6f533362283bbdd3bf6",
                 "shasum": ""
             },
             "require": {
@@ -1677,7 +1677,7 @@
                 "machine learning",
                 "nlp"
             ],
-            "time": "2018-01-06T13:39:49+00:00"
+            "time": "2016-08-30T21:00:25+00:00"
         },
         {
             "name": "opis/closure",
