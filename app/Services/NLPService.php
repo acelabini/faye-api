@@ -220,7 +220,6 @@ class NLPService
         try {
             return implode(" ", $data ?: $this->topic);
         } catch (\Exception $e) {
-            Log::info($this->topic);
         }
     }
 
