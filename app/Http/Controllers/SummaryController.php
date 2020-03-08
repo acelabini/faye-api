@@ -169,6 +169,7 @@ class SummaryController extends ApiController
             $removeDuplicates = $options["remove_duplicates"] ?? null;
             $stopWords = $request->has("stop_words") && !empty($request->get("stop_words"))
                 ? $request->get("stop_words") : [];
+            $stopWords = is_string($stopWords) ? explode(",", $stopWords) : $stopWords;
             $stopWords = array_merge($stopWords, config('stop_words'));
             $data = [];
             $optionData = [
@@ -183,17 +184,26 @@ class SummaryController extends ApiController
                 'stop_words' => $request->get("stop_words") ?? null
             ];
             $isReport = $request->get("data_category") == 'Incident Report';
+            $isUploaded = $request->has("upload_processed_data_file") &&
+                $request->get("data_category") === "upload_processed_data";
             $set = $this->questionSetService->getSet();
-            if ($isReport) {
+            if ($isUploaded) {
+                $categories = ['Uploaded Data'];
+            } else if ($isReport) {
                 $categories = ['Incident Report'];
             }
             foreach ($categories as $category) {
-                list ($answers, $answer) = $this->raw(
-                    $category,
-                    false,
-                    true,
-                    $isReport
-                );
+                if ($isUploaded) {
+                    $answers = null;
+                    $answer = file_get_contents($request->file("upload_processed_data_file"));
+                } else {
+                    list ($answers, $answer) = $this->raw(
+                        $category,
+                        false,
+                        true,
+                        $isReport
+                    );
+                }
                 $data[$category]['symbols'] = 'N/A';
                 if ($removeSymbols) {
                     $data[$category]['symbols'] = preg_match_all(
@@ -211,7 +221,9 @@ class SummaryController extends ApiController
                 }
                 $data[$category]['duplicates'] = 'N/A';
                 if ($removeDuplicates) {
-                    if ($isReport) {
+                    if ($isUploaded) {
+                        $countValues = [];
+                    } else if ($isReport) {
                         $countValues = $answers;
                     } else {
                         $countValues = array_column($answers, 'answer');
@@ -222,7 +234,9 @@ class SummaryController extends ApiController
                     }));
                 }
                 $data[$category]['raw_num_words'] = str_word_count($answer);
-                if ($isReport) {
+                if ($isUploaded) {
+                    $data[$category]['cleaned_num_words'] = str_word_count($answer);
+                } else if ($isReport) {
                     $data[$category]['cleaned_num_words'] = str_word_count(
                         (new NLPService())->getReports()->clean()->topWords()->toString()
                     );
