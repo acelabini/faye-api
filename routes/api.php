@@ -61,6 +61,7 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
                     $router->post('/summary/{device?}/{order?}', 'SummaryController@summary');
                     $router->post('/publish-data', 'SummaryController@publish');
                     $router->post('/clean-data/{raw?}', 'SummaryController@cleanData');
+                    $router->post('/enumerations', 'SummaryController@showEnumerations');
                     $router->get('/{device_address}/{set_id}', 'Management\AnswerController@getAnswer');
                 });
                 $router->group(['prefix' => 'locations'], function () use ($router) {
