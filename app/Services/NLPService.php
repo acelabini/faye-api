@@ -47,7 +47,7 @@ class NLPService
     {
         $this->questionSet = $data['question_set'] ?? null;
         $this->iterations = $data['iterations'] ?? 50;
-        $this->limitWords = $data['limit_words'] ?? 5;
+        $this->limitWords = $data['limit_words'] ?? null;
         $this->numberOfTopics = $data['number_of_topics'] ?? 5;
         $this->top = $data['get_top'] ?? null;
         $this->options = $data['options'] ?? null;
@@ -108,6 +108,8 @@ try {
 
         $withLimit = $lda->getPhi($this->limitWords);
         $this->words = $lda->getPhi();
+        arsort($this->words);
+        Log::info($this->words);
         $words = $this->words[0] ?? $this->words;
         $size = count($words) / $this->numberOfTopics;
         $words = array_chunk($words, $size,true); // true to preserve the keys
@@ -218,7 +220,11 @@ Log::info($e->getMessage());
 
     public function toString($data = null)
     {
-        return implode(" ", $data ?: $this->topic);
+        try {
+            return implode(" ", $data ?: $this->topic);
+        } catch (\Exception $e) {
+            Log::info($this->topic);
+        }
     }
 
     public function sortOriginal()
@@ -284,7 +290,8 @@ Log::info($e->getMessage());
 
     public function getAllTopic()
     {
-        return array_filter($this->allTopic, function ($item) {
+        $stopWords = array_merge($this->stopWords, config('stop_words'));
+        $filtered = array_filter($this->allTopic, function ($item) use ($stopWords) {
             if (isset($this->options['remove_symbols'])) {
                 $item = preg_replace("/[^a-zA-Z0-9 ]/i", "", strtolower($item));
             }
@@ -294,5 +301,16 @@ Log::info($e->getMessage());
 
             return $item;
         });
+        $data = [];
+        foreach ($filtered as $item) {
+            $value = explode(" ", $item);
+            $word = "";
+            foreach ($value as $val) {
+                $word .= !in_array(strtolower($val), $stopWords) ? $val." " : " ";
+            }
+            $data[] = $word;
+        };
+
+        return $data;
     }
 }

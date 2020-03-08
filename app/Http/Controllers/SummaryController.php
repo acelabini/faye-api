@@ -99,23 +99,45 @@ class SummaryController extends ApiController
         });
     }
 
-    public function raw($category)
+    public function raw($category, $replace = true, $returnAnswers = false, $incidentReport = false)
     {
         $concat = '';
-        $answers = $this->answersRepository->getCloudAnswers()->toArray();
-        foreach ($answers as $answer) {
-            if ($category) {
-                $category = str_replace('"', "", $category);
-                $categories = $this->answersRepository->getCategory($category, $answer['device_address']);
-                if ($categories->isEmpty()) {
-                    continue;
-                }
+        $rightAnswers = [];
+        if ($incidentReport) {
+            $reportRepo = app()->make(IncidentReportRepository::class);
+            $reports = $reportRepo->search([
+                ['status', 'confirmed']
+            ]);
+            foreach ($reports as $report) {
+                if ($replace)
+                    $ans = preg_replace('/[\s,.]+/', ' ', $report->message);
+                else
+                    $ans = $report->message;
+
+                $concat .= $ans . " ";
+                $rightAnswers[] = $report->message;
             }
-            $ans = preg_replace('/[\s,.]+/', ' ', $answer['answer']);
-            $concat .= $ans. " ";
+        } else {
+            $answers = $this->answersRepository->getCloudAnswers()->toArray();
+            foreach ($answers as $answer) {
+                if ($category) {
+                    $category = str_replace('"', "", $category);
+                    $categories = $this->answersRepository->getCategory($category, $answer['device_address']);
+                    if ($categories->isEmpty()) {
+                        continue;
+                    }
+                }
+                if ($replace)
+                    $ans = preg_replace('/[\s,.]+/', ' ', $answer['answer']);
+                else
+                    $ans = $answer['answer'];
+
+                $concat .= $ans . " ";
+                $rightAnswers[] = $answer;
+            }
         }
 
-        return $concat;
+        return $returnAnswers ? [$rightAnswers, $concat] : $concat;
     }
 
     public function rawIncident()
@@ -134,6 +156,90 @@ class SummaryController extends ApiController
                 'topic' => preg_replace('/\s+/', ' ', $concat),
                 'name' => "incident_reports.txt"
             ]]);
+        });
+    }
+
+    public function showEnumerations(Request $request)
+    {
+        return $this->runWithExceptionHandling(function () use ($request) {
+            $options = $request->get("options") ? json_decode($request->get("options"), true) : [];
+            $categories = $request->get("category") ? json_decode($request->get("category"), true) : [];
+            $removeSymbols = $options["remove_symbols"] ?? null;
+            $removeNumbers = $options["remove_numbers"] ?? null;
+            $removeDuplicates = $options["remove_duplicates"] ?? null;
+            $stopWords = $request->has("stop_words") && !empty($request->get("stop_words"))
+                ? $request->get("stop_words") : [];
+            $stopWords = array_merge($stopWords, config('stop_words'));
+            $data = [];
+            $optionData = [
+                'options' => [
+                    'remove_symbols' => $removeSymbols,
+                    'remove_numbers' => $removeNumbers,
+                    'remove_duplicates' => $removeDuplicates,
+                ],
+                'iterations' => !empty($settings['number_iterations']) ? $settings['number_iterations'] : 50,
+                'limit_words' => !empty($settings['number_words']) ? $settings['number_words'] : 5,
+                'number_of_topics' => !empty($settings['number_topics']) ? $settings['number_topics'] : 5,
+                'stop_words' => $request->get("stop_words") ?? null
+            ];
+            $isReport = $request->get("data_category") == 'Incident Report';
+            $set = $this->questionSetService->getSet();
+            if ($isReport) {
+                $categories = ['Incident Report'];
+            }
+            foreach ($categories as $category) {
+                list ($answers, $answer) = $this->raw(
+                    $category,
+                    false,
+                    true,
+                    $isReport
+                );
+                $data[$category]['symbols'] = 'N/A';
+                if ($removeSymbols) {
+                    $data[$category]['symbols'] = preg_match_all(
+                        "/[^a-zA-Z0-9\s\']/",
+                        html_entity_decode($answer, ENT_QUOTES, 'UTF-8')
+                    );
+                }
+                $data[$category]['numbers'] = 'N/A';
+                if ($removeNumbers) {
+                    $data[$category]['numbers'] = strlen(preg_replace(
+                        "/[^0-9]/",
+                        "",
+                        html_entity_decode($answer, ENT_QUOTES, 'UTF-8')
+                    ));
+                }
+                $data[$category]['duplicates'] = 'N/A';
+                if ($removeDuplicates) {
+                    if ($isReport) {
+                        $countValues = $answers;
+                    } else {
+                        $countValues = array_column($answers, 'answer');
+                    }
+                    $temp = array_count_values($countValues);
+                    $data[$category]['duplicates'] = count(array_filter($temp, function ($item) {
+                        return $item > 1 ? $item : null;
+                    }));
+                }
+                $data[$category]['raw_num_words'] = str_word_count($answer);
+                if ($isReport) {
+                    $data[$category]['cleaned_num_words'] = str_word_count(
+                        (new NLPService())->getReports()->clean()->topWords()->toString()
+                    );
+                } else {
+                    $data[$category]['cleaned_num_words'] = str_word_count((new NLPService(array_merge($optionData, [
+                        'question_set' => $set
+                    ])))->getAnswers($category)->clean()->topWords()->toString());
+                }
+                $data[$category]['stop_words'] = 0;
+                foreach (explode(" ", $answer) as $item) {
+                    if (in_array($item, $stopWords)) {
+                        $data[$category]['stop_words']++;
+                    }
+                }
+            }
+
+            $this->response->setData(['data' => $data]);
         });
     }
 

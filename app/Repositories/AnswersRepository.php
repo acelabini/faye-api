@@ -188,7 +188,7 @@ class AnswersRepository extends Repository
             ->when($order, function ($q) use ($order) {
                 $q->where('questionnaire_sets.order', $order);
             })
-            ->groupBy('answers.answer')
+            ->groupBy('answers.device_address')
             ->orderBy('questionnaire_sets.order', 'asc')
             ->get()
             ;
