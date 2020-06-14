@@ -10,6 +10,7 @@ use App\Repositories\IncidentReportRepository;
 use App\Repositories\ProcessedDataRepository;
 use App\Repositories\RolesRepository;
 use App\Repositories\UserRepository;
+use App\Utils\Enumerators\RolesEnumerator;
 use App\Utils\Enumerators\UserStatusEnumerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -137,6 +138,26 @@ class UserController extends ApiController
             ];
 
             $this->response->setData(['data' => $data]);
+        });
+    }
+
+    public function signUp(Request $request)
+    {
+        return $this->runWithExceptionHandling(function () use ($request) {
+            $this->validate($request, [
+                'name'      =>  'required|string',
+                'email'     =>  'required|email|unique:users,email',
+                'password'  =>  'required'
+            ]);
+
+            $user = $this->userRepository->create([
+                'name'      =>  $request->get('name'),
+                'email'     =>  $request->get('email'),
+                'role_id'   =>  RolesEnumerator::USER,
+                'password'  =>  Hash::make($request->get("password")),
+                'status'    =>  UserStatusEnumerator::ACTIVE
+            ]);
+            $this->response->setData(['data' => new User($user)]);
         });
     }
 }

@@ -52,4 +52,5 @@ class AnswerController extends ApiController
             $this->response->setData(['data' => $answers->toArray()]);
         });
     }
+
 }

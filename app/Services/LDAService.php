@@ -23,14 +23,18 @@ class LDAService
 
     public function processLDA(array $postAnswers, array $options)
     {
+        $stopWords = $options['stop_words'] ?? null;
+        if ($stopWords) {
+
+        }
         $data = [
+            'answers'       =>  $postAnswers,
             'model_name'    =>  $options['model_name'] ?? null,
             'path'          =>  'jenLDA',
             'num_topics'    =>  $options['number_of_topics'] ?? 10,
-            'stop_words'    =>  $options['stop_words'] ?? null,
+            'stop_words'    =>  $stopWords,
             'iterations'    =>  $options['iterations'] ?? 50,
             'limit_words'   =>  $options['limit_words'] ?? 5,
-            'answers'       =>  $postAnswers,
         ];
 
         $url = 'http://159.89.193.192/lda/createLDA.php';

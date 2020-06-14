@@ -41,6 +41,7 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
             $router->get('/barangays', 'Management\LocationController@barangays');
         });
         $router->get('/dashboard', 'Management\UserController@dashboard');
+        $router->post('/sign-up', 'Management\UserController@signUp');
     });
     $router->group(['middleware' => ['auth.jwt']], function () use ($router) {
         $router->get('/user', 'Authentication\AuthenticationController@getAuthUser');

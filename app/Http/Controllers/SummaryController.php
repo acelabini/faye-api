@@ -118,7 +118,6 @@ class SummaryController extends ApiController
                 $rightAnswers[] = $report->message;
             }
         } else {
-
             $set = $this->questionSetService->getSet();
             $answers = $this->answersRepository->getCloudAnswers($set->id)->toArray();
             foreach ($answers as $answer) {
@@ -234,7 +233,6 @@ class SummaryController extends ApiController
                     $dupes = array_filter($temp, function ($item) {
                         return $item > 1 ? $item : null;
                     });
-Log::info($dupes);
                     $data[$category]['duplicates'] = count($dupes);
                     $data[$category]['duplicates_word_count'] = 0;
                     foreach ($dupes as $word => $item) {
