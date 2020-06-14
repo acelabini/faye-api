@@ -71,6 +71,7 @@ class AnswerController extends ApiController
                 $identifier = AnswerService::getAnswerIdentifier($answers['device']);
                 unset($answers['device']);
                 $data = [];
+
                 foreach ($fields as $field) {
                     if (isset($answers[$field])) {
                         $data[] = $answers[$field];

@@ -38,7 +38,6 @@ class AnswerService
         if (isset($identifier['user_id']) && $identifier['user_id']) {
             $identity = ['user_id', $identifier['user_id']];
         }
-
         foreach ($data as $items) {
             $size = count($items);
             if ($size > 1) {

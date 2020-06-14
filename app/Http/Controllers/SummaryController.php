@@ -118,7 +118,9 @@ class SummaryController extends ApiController
                 $rightAnswers[] = $report->message;
             }
         } else {
-            $answers = $this->answersRepository->getCloudAnswers()->toArray();
+
+            $set = $this->questionSetService->getSet();
+            $answers = $this->answersRepository->getCloudAnswers($set->id)->toArray();
             foreach ($answers as $answer) {
                 if ($category) {
                     $category = str_replace('"', "", $category);
@@ -229,9 +231,15 @@ class SummaryController extends ApiController
                         $countValues = array_column($answers, 'answer');
                     }
                     $temp = array_count_values($countValues);
-                    $data[$category]['duplicates'] = count(array_filter($temp, function ($item) {
+                    $dupes = array_filter($temp, function ($item) {
                         return $item > 1 ? $item : null;
-                    }));
+                    });
+Log::info($dupes);
+                    $data[$category]['duplicates'] = count($dupes);
+                    $data[$category]['duplicates_word_count'] = 0;
+                    foreach ($dupes as $word => $item) {
+                        $data[$category]['duplicates_word_count'] += str_word_count($word) * ($item-1);
+                    }
                 }
                 $data[$category]['raw_num_words'] = str_word_count($answer);
                 if ($isUploaded) {
@@ -438,6 +446,7 @@ class SummaryController extends ApiController
             $data['processed_id'] = $processed->id;
 
             $optionData['model_name'] = $modelName;
+            $optionData['stop_words'] = $clean->getStopWords();
             $this->LDAService->processLDA($ldaTopic, $optionData);
 
             $this->response->setData(['data' => $data]);

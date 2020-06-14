@@ -52,7 +52,8 @@ class NLPService
         $this->top = $data['get_top'] ?? null;
         $this->options = $data['options'] ?? null;
         if (isset($data['stop_words']) && !is_array($data['stop_words'])) {
-            $stopWords = trim(preg_replace('/\s+/', '', $data['stop_words']));
+            //$stopWords = trim(preg_replace('/\s+/', '', $data['stop_words']));
+            $stopWords = trim(preg_replace('/[^a-zA-Z0-9,\s]/i', '', $data['stop_words']));
             $this->stopWords = explode(",", $stopWords);
         }
         $this->categories = !empty($data['categories']) ? json_decode($data['categories']) : [];
@@ -64,7 +65,7 @@ class NLPService
             return $this;
         }
         if (isset($this->options['remove_symbols'])) {
-            $this->topic = preg_replace("/[^a-zA-Z0-9 ]/i", "", strtolower($this->topic));
+            $this->topic = preg_replace("/[^a-zA-Z0-9 ]/i", " ", strtolower($this->topic));
         }
         if (isset($this->options['remove_numbers'])) {
             $this->topic = preg_replace("/[^a-zA-Z ]/i", "", strtolower($this->topic));
@@ -199,6 +200,7 @@ Log::info($e->getMessage());
     public function topWords($category = null, $topic = null)
     {
         $stopWords = array_merge($this->stopWords, config('stop_words'));
+        $stopWords = array_map('trim', $stopWords);
         $words = $topic ? explode(" ", $topic) : ($this->words ?: $this->topic);
         if (!$words) {
             return $this;
@@ -289,18 +291,22 @@ Log::info($e->getMessage());
 
     public function getAllTopic()
     {
+
         $stopWords = array_merge($this->stopWords, config('stop_words'));
-        $filtered = array_filter($this->allTopic, function ($item) use ($stopWords) {
+        
+        $filtered = [];
+        foreach ($this->allTopic as $item) {
             if (isset($this->options['remove_symbols'])) {
-                $item = preg_replace("/[^a-zA-Z0-9 ]/i", "", strtolower($item));
+                $item = preg_replace("/[^a-zA-Z0-9 ]/i", " ", strtolower($item));
             }
             if (isset($this->options['remove_numbers'])) {
                 $item = preg_replace("/[^a-zA-Z ]/i", "", strtolower($item));
             }
 
-            return $item;
-        });
-        $data = [];
+            $filtered[] = $item;
+        }
+
+	$data = [];
         foreach ($filtered as $item) {
             $value = explode(" ", $item);
             $word = "";
@@ -311,5 +317,23 @@ Log::info($e->getMessage());
         };
 
         return $data;
+
+/**
+        return array_filter($this->allTopic, function ($item) {
+            if (isset($this->options['remove_symbols'])) {
+                $item = preg_replace("/[^a-zA-Z0-9 ]/i", "", strtolower($item));
+            }
+            if (isset($this->options['remove_numbers'])) {
+                $item = preg_replace("/[^a-zA-Z ]/i", "", strtolower($item));
+            }
+
+            return $item;
+        }); **/
+    }
+
+
+    public function getStopWords()
+    {
+        return $this->stopWords;
     }
 }

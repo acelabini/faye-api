@@ -164,7 +164,7 @@ class QuestionService
                 $order
             );
         }
-
         return [optional($currentSet)->question, $currentSet];
     }
 }
+
