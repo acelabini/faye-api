@@ -52,7 +52,7 @@ class NLPService
         $this->top = $data['get_top'] ?? null;
         $this->options = $data['options'] ?? null;
         if (isset($data['stop_words']) && !is_array($data['stop_words'])) {
-            $stopWords = trim(preg_replace('/\s+/', '', $data['stop_words']));
+            $stopWords = trim(preg_replace('/[^a-zA-Z0-9,\s]/i', '', $data['stop_words']));
             $this->stopWords = explode(",", $stopWords);
         }
         $this->categories = !empty($data['categories']) ? json_decode($data['categories']) : [];
@@ -109,7 +109,6 @@ class NLPService
         $withLimit = $lda->getPhi($this->limitWords);
         $this->words = $lda->getPhi();
         arsort($this->words);
-        Log::info($this->words);
         $words = $this->words[0] ?? $this->words;
         $size = count($words) / $this->numberOfTopics;
         $words = array_chunk($words, $size,true); // true to preserve the keys
@@ -196,6 +195,7 @@ class NLPService
     public function topWords($category = null, $topic = null)
     {
         $stopWords = array_merge($this->stopWords, config('stop_words'));
+        $stopWords = array_map('trim', $stopWords);
         $words = $topic ? explode(" ", $topic) : ($this->words ?: $this->topic);
         if (!$words) {
             return $this;
@@ -287,16 +287,18 @@ class NLPService
     public function getAllTopic()
     {
         $stopWords = array_merge($this->stopWords, config('stop_words'));
-        $filtered = array_filter($this->allTopic, function ($item) use ($stopWords) {
+        $filtered = [];
+        foreach ($this->allTopic as $item) {
             if (isset($this->options['remove_symbols'])) {
-                $item = preg_replace("/[^a-zA-Z0-9 ]/i", "", strtolower($item));
+                $item = preg_replace("/[^a-zA-Z0-9 ]/i", " ", strtolower($item));
             }
             if (isset($this->options['remove_numbers'])) {
                 $item = preg_replace("/[^a-zA-Z ]/i", "", strtolower($item));
             }
 
-            return $item;
-        });
+            $filtered[] = $item;
+        }
+
         $data = [];
         foreach ($filtered as $item) {
             $value = explode(" ", $item);
@@ -304,9 +306,14 @@ class NLPService
             foreach ($value as $val) {
                 $word .= !in_array(strtolower($val), $stopWords) ? $val." " : " ";
             }
-            $data[] = $word;
+            $data[] = preg_replace("/ {2,}/", " ", $word);
         };
 
-        return $data;
+        return $filtered;
+    }
+
+    public function getStopWords()
+    {
+        return $this->stopWords;
     }
 }
