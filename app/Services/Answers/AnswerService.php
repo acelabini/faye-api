@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Answer;
+namespace App\Services\Answers;
 
 use App\Models\QuestionnaireSets;
 use App\Models\Questions;

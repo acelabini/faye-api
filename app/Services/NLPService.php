@@ -70,6 +70,9 @@ class NLPService
         if (isset($this->options['remove_numbers'])) {
             $this->topic = preg_replace("/[^a-zA-Z ]/i", "", strtolower($this->topic));
         }
+        if (isset($this->options['remove_duplicates']) && is_string($this->topic)) {
+            $this->topic = implode(' ',array_unique(explode(' ', $this->topic)));
+        }
 
         return $this;
     }

@@ -9,12 +9,12 @@ use App\Repositories\IncidentReportRepository;
 use App\Repositories\ProcessedDataRepository;
 use App\Repositories\QuestionnaireSetsRepository;
 use App\Repositories\QuestionSetsRepository;
-use App\Services\Answer\AnswerService;
+use App\Services\Answers\AnswerService;
 use App\Services\Input\InputFieldService;
 use App\Services\LDAService;
 use App\Services\NLPService;
 use App\Services\Questions\QuestionService;
-use App\Sets\QuestionSetService;
+use App\Services\Sets\QuestionSetService;
 use App\Utils\Enumerators\SummaryTypeEnumerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -296,14 +296,21 @@ class SummaryController extends ApiController
                 $clean = (new NLPService())->getReports()->clean();
                 $topic = $clean->getTopic();
             } else {
-                $category = $request->get("category") ? json_decode($request->get("category"), true) : [];
-                $set = $this->questionSetService->getSet();
-                $topic = null;
-                foreach ($category as $item) {
-                    $clean = (new NLPService(array_merge($optionData, [
-                        'question_set' => $set
-                    ])))->getAnswers($item)->clean()->topWords();
-                    $topic .= $clean->toString() . " ";
+                if ($request->has("upload_processed_data_file") &&
+                    $request->get("data_category") === "upload_processed_data") {
+                    $topic = file_get_contents($request->file("upload_processed_data_file"));
+                    $clean = (new NLPService($optionData))->setTopic($topic)->clean()->topWords();
+                    $topic = $clean->toString();
+                } else {
+                    $category = $request->get("category") ? json_decode($request->get("category"), true) : [];
+                    $set = $this->questionSetService->getSet();
+                    $topic = null;
+                    foreach ($category as $item) {
+                        $clean = (new NLPService(array_merge($optionData, [
+                            'question_set' => $set
+                        ])))->getAnswers($item)->clean()->topWords();
+                        $topic .= $clean->toString() . " ";
+                    }
                 }
             }
             $modelName = $request->get("data_category");
@@ -438,7 +445,7 @@ class SummaryController extends ApiController
 
             $processed = $this->processedDataRepository->create([
                 'data' => $data,
-                'processed_by' => Auth::user()->id
+                'processed_by' => optional(Auth::user())->id ?: 1
             ]);
 
             $data['processed_id'] = $processed->id;

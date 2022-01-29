@@ -10,9 +10,9 @@ use App\Repositories\AnswersRepository;
 use App\Repositories\InputFieldTypeRepository;
 use App\Repositories\QuestionnaireSetsRepository;
 use App\Repositories\QuestionsRepository;
-use App\Services\Answer\AnswerService;
+use App\Services\Answers\AnswerService;
 use App\Services\Input\InputFieldService;
-use App\Sets\QuestionSetService;
+use App\Services\Sets\QuestionSetService;
 use Illuminate\Support\Facades\Log;
 
 class QuestionService

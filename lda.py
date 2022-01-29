@@ -5,9 +5,10 @@ import funcy as fp
 from gensim import models
 from gensim.corpora import Dictionary, MmCorpus
 import nltk
+nltk.download('stopwords')
 nltk.data.path.append('/usr/share/nltk_data/')
 import pandas as pd
-import pyLDAvis.gensim as gensimvis
+import pyLDAvis.gensim_models as gensimvis
 import pyLDAvis
 import sys
 
@@ -16,9 +17,9 @@ EMAIL_REGEX = re.compile(r"[a-z0-9\.\+_-]+@[a-z0-9\._-]+\.[a-z]*")
 FILTER_REGEX = re.compile(r"[^a-z '#]")
 TOKEN_MAPPINGS = [(EMAIL_REGEX, "#email"), (FILTER_REGEX, ' ')]
 
-modelName = sys.argv[2];
-rPath = sys.argv[1]+'/'+modelName;
-numOfTopics = sys.argv[3];
+modelName = sys.argv[2]
+rPath = sys.argv[1]+'/'+modelName
+numOfTopics = sys.argv[3]
 
 def tokenize_line(line):
     res = line.lower()

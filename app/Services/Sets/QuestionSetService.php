@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Sets;
+namespace App\Services\Sets;
 
 use App\Models\LocationBarangays;
 use App\Models\QuestionSets;
@@ -9,7 +9,7 @@ use App\Repositories\AnswersRepository;
 use App\Repositories\QuestionnaireSetsRepository;
 use App\Repositories\QuestionSetsRepository;
 use App\Repositories\QuestionsRepository;
-use App\Services\Answer\AnswerService;
+use App\Services\Answers\AnswerService;
 use App\Utils\Enumerators\QuestionSetStatusEnumerator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;

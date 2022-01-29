@@ -9,7 +9,7 @@ use App\Repositories\QuestionSetsRepository;
 use App\Repositories\QuestionsRepository;
 use App\Repositories\UserRepository;
 use App\Services\Questions\QuestionService;
-use App\Sets\QuestionSetService;
+use App\Services\Sets\QuestionSetService;
 use App\Utils\Enumerators\QuestionSetStatusEnumerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

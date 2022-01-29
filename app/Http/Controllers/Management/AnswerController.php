@@ -6,7 +6,7 @@ use App\Http\Controllers\ApiController;
 use App\Http\Resources\Answers\AnswerList;
 use App\Repositories\AnswersRepository;
 use App\Repositories\QuestionnaireSetsRepository;
-use App\Services\Answer\AnswerService;
+use App\Services\Answers\AnswerService;
 use App\Services\Input\InputFieldService;
 use App\Services\Questions\QuestionService;
 use Illuminate\Http\Request;

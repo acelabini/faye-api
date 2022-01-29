@@ -43,13 +43,13 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         $router->get('/dashboard', 'Management\UserController@dashboard');
         $router->post('/sign-up', 'Management\UserController@signUp');
     });
-    $router->group(['middleware' => ['auth.jwt']], function () use ($router) {
+   // $router->group(['middleware' => ['auth.jwt']], function () use ($router) {
         $router->get('/user', 'Authentication\AuthenticationController@getAuthUser');
         $router->get('/logout', 'Authentication\AuthenticationController@logout');
         $router->group(['prefix' => 'profile'], function () use ($router) {
             $router->get('/', 'HomeController@profile');
         });
-        $router->group(['middleware' => ['admin']], function () use ($router) {
+        //$router->group(['middleware' => ['admin']], function () use ($router) {
             $router->group(['prefix' => 'management'], function () use ($router) {
                 $router->post('/summary/reports', 'SummaryController@reportSummary');
                 $router->group(['prefix' => 'published'], function () use ($router) {
@@ -110,6 +110,6 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
                     $router->get('/raw', 'SummaryController@rawIncident');
                 });
             });
-        });
-    });
+        //});
+    //});
 });

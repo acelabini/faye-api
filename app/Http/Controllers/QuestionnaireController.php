@@ -11,7 +11,7 @@ use App\Repositories\QuestionSetsRepository;
 use App\Repositories\QuestionsRepository;
 use App\Repositories\UserRepository;
 use App\Services\Questions\QuestionService;
-use App\Sets\QuestionSetService;
+use App\Services\Sets\QuestionSetService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;

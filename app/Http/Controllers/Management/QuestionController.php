@@ -13,7 +13,7 @@ use App\Repositories\ProcessedDataRepository;
 use App\Repositories\QuestionsRepository;
 use App\Repositories\UserRepository;
 use App\Services\Questions\QuestionService;
-use App\Sets\QuestionSetService;
+use App\Services\Sets\QuestionSetService;
 use App\Validations\QuestionCreate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
