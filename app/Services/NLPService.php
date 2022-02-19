@@ -54,7 +54,8 @@ class NLPService
         if (isset($data['stop_words']) && !is_array($data['stop_words'])) {
             $stopWords = trim(preg_replace('/\s+/', '', $data['stop_words']));
             $stopWords = trim(preg_replace('/[^a-zA-Z0-9,\s]/i', '', $stopWords));
-            $this->stopWords = explode(",", $stopWords);
+            $stopWords = explode(",", $stopWords);
+            $this->stopWords = array_merge($stopWords, config('stop_words'));
         }
         $this->categories = !empty($data['categories']) ? json_decode($data['categories']) : [];
     }
