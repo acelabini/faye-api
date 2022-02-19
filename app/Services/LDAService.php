@@ -25,15 +25,11 @@ class LDAService
 
     public function processLDA(array $postAnswers, array $options)
     {
-        $stopWords = $options['stop_words'] ?? null;
-        if ($stopWords) {
-
-        }
         $data = [
             'model_name'    =>  $options['model_name'] ?? null,
             'path'          =>  'data',
             'num_topics'    =>  $options['number_of_topics'] ?? 10,
-            'stop_words'    =>  $stopWords,
+            'stop_words'    =>  $options['stop_words'] ?? null,
             'iterations'    =>  $options['iterations'] ?? 50,
             'limit_words'   =>  $options['limit_words'] ?? 5,
             'answers'       =>  $postAnswers,
@@ -86,6 +82,7 @@ class LDAService
     public function lda(array $data)
     {
         $answers = $data['answers'];
+        $stopWords = $data['stop_words'] ?? null;
         $modelName = $data['model_name'] ?? null;
         $rPath = $data['path'] ?? null;
         $numOfTopics = $data['num_topics'] ?? null;
@@ -95,7 +92,8 @@ class LDAService
 
         if (!@mkdir($dir)) {
             $error = error_get_last();
-            echo $error['message']."\n";
+            echo $error['message'] ?? $error."\n";
+            Log::critical($error['message'] ?? $error);
         }
 
         if (!is_dir($dir)) {
@@ -106,6 +104,11 @@ class LDAService
 
         if (is_array($answers)) {
             foreach ($answers as $answer) {
+                if ($stopWords) {
+                    foreach ($stopWords as $stopWord) {
+                        $answer = str_ireplace($stopWord, "", $answer);
+                    }
+                }
                 $id = uniqid();
                 $file = fopen("{$dir}/$id", "wb");
                 fwrite($file, $answer);
