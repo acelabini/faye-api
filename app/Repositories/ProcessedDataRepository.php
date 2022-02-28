@@ -26,4 +26,11 @@ class ProcessedDataRepository extends Repository
             ->where('publish', true)
             ->get();
     }
+
+    public function getAll()
+    {
+        return $this->model
+            ->orderBy('id', 'desc')
+            ->get();
+    }
 }

@@ -54,7 +54,8 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
                 $router->post('/summary/reports', 'SummaryController@reportSummary');
                 $router->group(['prefix' => 'published'], function () use ($router) {
                     $router->get('/', 'Management\QuestionController@getPublishedData');
-                    $router->patch('/{id}', 'Management\QuestionController@patchPublishedData');
+                    $router->get('/{id}', 'Management\QuestionController@getProcessedData');
+                    $router->post('/{id}', 'Management\QuestionController@updateProcessedData');
                     $router->delete('/{id}', 'Management\QuestionController@deletePublishedData');
                 });
                 $router->group(['prefix' => 'answers'], function () use ($router) {

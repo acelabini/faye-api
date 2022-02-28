@@ -17,6 +17,7 @@ use App\Services\Sets\QuestionSetService;
 use App\Validations\QuestionCreate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class QuestionController extends ApiController
 {
@@ -192,12 +193,32 @@ class QuestionController extends ApiController
     public function getPublishedData()
     {
         return $this->runWithExceptionHandling(function () {
-            $published = $this->processedDataRepository->all();
+            $published = $this->processedDataRepository->getAll();
             foreach ($published as &$item) {
                 $item->processed_by = $item->processedBy;
             }
 
             $this->response->setData(['data' => $published]);
+        });
+    }
+
+    public function getProcessedData(Request $request, $id)
+    {
+        return $this->runWithExceptionHandling(function () use ($id) {
+            $processed = $this->processedDataRepository->get($id);
+            $this->response->setData(['data' => $processed]);
+        });
+    }
+
+    public function updateProcessedData(Request $request, $id)
+    {
+        return $this->runWithExceptionHandling(function () use ($id, $request) {
+            $processed = $this->processedDataRepository->get($id);
+            $data = $processed->data;
+            $data['thematic_analysis'] = $request->get('thematic_analysis');
+            $processed->data = $data;
+            $processed->save();
+            $this->response->setData(['data' => $processed]);
         });
     }
 

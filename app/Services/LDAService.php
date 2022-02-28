@@ -106,7 +106,7 @@ class LDAService
             foreach ($answers as $answer) {
                 if ($stopWords) {
                     foreach ($stopWords as $stopWord) {
-                        $answer = str_ireplace($stopWord, "", $answer);
+                        $answer =  preg_replace("/\b{$stopWord}\b/", "", $answer);
                     }
                 }
                 $id = uniqid();
