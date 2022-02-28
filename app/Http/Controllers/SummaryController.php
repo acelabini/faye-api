@@ -430,6 +430,7 @@ class SummaryController extends ApiController
             $cloud = $clean->topWords($category, $topic)->generateCloud()->getWords();
 
             $modelName = $settings['model_name'] ?? null;
+            $modelName = strtolower($modelName);
             if ($request->has("category") && !empty($request->get("category")) ||
                 $request->has("data_category") && !empty($request->get("data_category"))
             ) {
