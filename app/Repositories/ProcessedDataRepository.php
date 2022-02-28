@@ -30,6 +30,7 @@ class ProcessedDataRepository extends Repository
     public function getAll()
     {
         return $this->model
+            ->with('processedBy')
             ->orderBy('id', 'desc')
             ->get();
     }

@@ -194,9 +194,6 @@ class QuestionController extends ApiController
     {
         return $this->runWithExceptionHandling(function () {
             $published = $this->processedDataRepository->getAll();
-            foreach ($published as &$item) {
-                $item->processed_by = $item->processedBy;
-            }
 
             $this->response->setData(['data' => $published]);
         });
