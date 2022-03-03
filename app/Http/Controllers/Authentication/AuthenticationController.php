@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Authentication;
 
 use App\Http\Controllers\ApiController;
 use App\Repositories\UserRepository;
+use App\Utils\Enumerators\UserStatusEnumerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -31,12 +32,18 @@ class AuthenticationController extends ApiController
                 'password'  =>  'required'
             ]);
             $token = $this->auth->attempt($request->only('email', 'password'));
-
-            $this->response->setData(['data' => [
-                'success'   =>  $token ? true : false,
-                'token'     =>  $token,
-                'user'      =>  $this->auth->user()
-            ]]);
+            if ($this->auth->user()->status === UserStatusEnumerator::BLOCKED) {
+                $this->response->setData(['data' => [
+                    'success'   =>  false,
+                    'token'     =>  false,
+                    'user'      =>  null
+                ]]);
+            } else {
+                $this->response->setData(['data' => [
+                    'success'   =>  $token ? true : false,
+                    'token'     =>  $token,
+                    'user'      =>  $this->auth->user()
+                ]]);}
         });
     }
 
