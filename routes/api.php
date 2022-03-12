@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 */
 
 $router->group(['prefix' => 'v1'], function () use ($router) {
+    $router->get('published/{id}', 'Management\QuestionController@getProcessedData');
     $router->group(['middleware' => ['secret']], function () use ($router) {
         $router->get('/cloud', 'SummaryController@wordCloud');
         $router->post('/performLDA/{setId?}', 'SummaryController@getLDA');
@@ -56,6 +57,7 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
                     $router->get('/', 'Management\QuestionController@getPublishedData');
                     $router->get('/{id}', 'Management\QuestionController@getProcessedData');
                     $router->post('/{id}', 'Management\QuestionController@updateProcessedData');
+                    $router->patch('/{id}', 'Management\QuestionController@patchPublishedData');
                     $router->delete('/{id}', 'Management\QuestionController@deletePublishedData');
                 });
                 $router->group(['prefix' => 'answers'], function () use ($router) {
